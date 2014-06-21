@@ -1,3 +1,5 @@
+require 'hashie'
+
 module Synced
   # Provide a serialized `bs_data` attribute for models. This is a friendlier
   # alternative to `serialize` with respect to dirty attributes.
@@ -25,15 +27,11 @@ module Synced
     end
 
     def dump(object)
-      I.instrument "dump.has_synced_data" do
-        JSON.dump object
-      end
+      JSON.dump object
     end
 
     def load(source)
-      I.instrument "load.has_synced_data" do
-        JSON.load source
-      end
+      JSON.load source
     end
   end
 end

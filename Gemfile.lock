@@ -2,7 +2,8 @@ PATH
   remote: .
   specs:
     synced (0.0.1)
-      bookingsync-api (>= 0.0.16)
+      bookingsync-api (>= 0.0.17)
+      hashie
       rails (>= 4.0.0)
 
 GEM
@@ -36,7 +37,7 @@ GEM
       tzinfo (~> 1.1)
     addressable (2.3.6)
     arel (5.0.1.20140414130214)
-    bookingsync-api (0.0.16)
+    bookingsync-api (0.0.17)
       addressable
       faraday (~> 0.9)
       hashie
