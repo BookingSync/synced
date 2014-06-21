@@ -42,8 +42,9 @@ rake db:migrate
 
 And include `Synced::HasSyncedData` in the model you want to keep in sync:
 
+Example:
 ```ruby
-class Account < ActiveRecord::Base
+class Rental < ActiveRecord::Base
   include Synced::HasSyncedData
 end
 ```
