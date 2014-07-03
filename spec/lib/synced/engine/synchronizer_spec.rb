@@ -68,6 +68,7 @@ describe Synced::Engine::Synchronizer do
         remote_object(id: 1, name: "test", updated_at: 2.days.ago),
         remote_object(id: 1, name: "invalid", updated_at: 2.days.ago)
       ] }
+
       it "and doesn't save anything if saving one record fails" do
         expect {
           expect {
@@ -135,6 +136,41 @@ describe Synced::Engine::Synchronizer do
         Amenity.synchronize(remote: [remote_object(id: "test", name: "wow",
           updated_at: Time.now)])
         expect(Amenity.last.name).to eq "wow"
+      end
+    end
+  end
+
+  context "#perform on model with associations" do
+    let(:locations) { [
+      remote_object(id: 13,
+        photos: [
+          remote_object(id: 131, filename: 'a.jpg'),
+          remote_object(id: 133, filename: 'b.jpg')
+        ]
+      ),
+      remote_object(id: 17,
+        photos: [
+          remote_object(id: 171, filename: 'c.jpg'),
+        ]
+      )]
+    }
+
+    it "creates local objects with associated local objects" do
+      expect {
+        Location.synchronize(remote: locations)
+      }.to change { Location.count }.by(2)
+      expect(Location.find_by(synced_id: 13).photos.count).to eq 2
+      expect(Location.find_by(synced_id: 17).photos.count).to eq 1
+    end
+
+    context "with option delete_if_missing: true" do
+      let(:location) { Location.create(synced_id: 13) }
+      let!(:photo) { location.photos.create(synced_id: 131) }
+      let!(:deleted_photo) { location.photos.create(synced_id: 1111) }
+
+      it "removes local association objects if missing in the remote data" do
+        Location.synchronize(remote: locations, delete_if_missing: true)
+        expect(Photo.find_by(synced_id: 1111)).to be_nil
       end
     end
   end

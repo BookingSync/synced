@@ -94,4 +94,32 @@ end
 
 This assumes that model has name and size attributes. On every sychronization these two attributes will be assigned with value of `remote_object.name` and `remote_object.size` appropriately.
 
+## Associations
+
+It's possible to synchronize objects together with it's associations. For that
+you need to
+
+  1. Specify associations you want to synchronize within `synced`
+    declaration of the parent model
+  2. Add `synced` declaration to the associated model
+
+```ruby
+class Location < ActiveRecord::Base
+  synced associations: :photos
+  has_many :photos
+end
+
+class Photo < ActiveRecord::Base
+  synced
+  belongs_to :location
+end
+```
+
+Then run synchronization of the parent objects. Every of the remote_locations
+objects needs to respond to `remote_location[:photos]` from where data for
+photos association will be taken.
+
+```ruby
+Location.synchronize(remote: remote_locations)
+```
 
