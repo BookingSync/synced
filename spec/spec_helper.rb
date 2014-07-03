@@ -15,3 +15,7 @@ RSpec.configure do |config|
   config.infer_base_class_for_anonymous_controllers = false
   config.order = "random"
 end
+
+def remote_object(attributes = {})
+  Hashie::Mash.new(attributes)
+end

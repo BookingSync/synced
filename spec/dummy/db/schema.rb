@@ -11,7 +11,22 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20140621150330) do
+ActiveRecord::Schema.define(version: 20140710113542) do
+
+  create_table "accounts", force: true do |t|
+    t.string   "name"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "amenities", force: true do |t|
+    t.string   "name"
+    t.integer  "remote_id"
+    t.datetime "remote_updated_at"
+    t.text     "remote_data"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
 
   create_table "rentals", force: true do |t|
     t.string   "name"
@@ -20,6 +35,7 @@ ActiveRecord::Schema.define(version: 20140621150330) do
     t.integer  "synced_id"
     t.text     "synced_data"
     t.datetime "synced_updated_at"
+    t.integer  "account_id"
   end
 
   add_index "rentals", ["synced_id"], name: "index_rentals_on_synced_id"
