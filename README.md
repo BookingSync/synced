@@ -70,19 +70,27 @@ Rental.synchronize(remote: remote_rentals, scope: website)
 
 By default synced stores remote object in the following db columns.
 
-  `synced_id` - ID of the remote object
-  `synced_data` - Whole remote object is serialized into this attribute
-  `synced_update_at` - Remote object's updated at
+    `synced_id` - ID of the remote object
+    `synced_data` - Whole remote object is serialized into this attribute
+    `synced_update_at` - Remote object's updated at
 
 You can configure your own fields in `synced` declaration in your model.
 
-`synced id_key: :remote_id, data_key: :remote_data, updated_at_key: :remote_updated_at`
+```
+class Rental < ActiveRecord::Base
+  synced id_key: :remote_id, data_key: :remote_data, updated_at_key: :remote_updated_at
+end
+```
 
 ## Local attributes
 
 All remote data is stored in `synced_data`, however sometimes it's useful to have some attributes directly in your model. You can use `local_attributes` for that.
 
-`synced local_attributes: [:name, :size]`
+```
+class Rental < ActiveRecord::Base
+  synced local_attributes: [:name, :size]
+end
+```
 
 This assumes that model has name and size attributes. On every sychronization these two attributes will be assigned with value of `remote_object.name` and `remote_object.size` appropriately.
 
