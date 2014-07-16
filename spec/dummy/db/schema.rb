@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20140710113542) do
+ActiveRecord::Schema.define(version: 20140715115835) do
 
   create_table "accounts", force: true do |t|
     t.string   "name"
@@ -24,6 +24,25 @@ ActiveRecord::Schema.define(version: 20140710113542) do
     t.integer  "remote_id"
     t.datetime "remote_updated_at"
     t.text     "remote_data"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "locations", force: true do |t|
+    t.string   "name"
+    t.integer  "synced_id"
+    t.datetime "synced_updated_at"
+    t.text     "synced_data"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "photos", force: true do |t|
+    t.string   "filename"
+    t.integer  "synced_id"
+    t.datetime "synced_updated_at"
+    t.text     "synced_data"
+    t.integer  "location_id"
     t.datetime "created_at"
     t.datetime "updated_at"
   end

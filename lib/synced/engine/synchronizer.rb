@@ -33,6 +33,7 @@ class Synced::Engine::Synchronizer
     @data_key          = options[:data_key]
     @delete_if_missing = options[:delete_if_missing]
     @local_attributes  = Array(options[:local_attributes])
+    @associations      = Array(options[:associations])
   end
 
   def perform
@@ -49,7 +50,14 @@ class Synced::Engine::Synchronizer
           @updated_at_key  => remote.updated_at,
         }
         local_object.attributes = local_attributes_mapping(remote)
-        local_object.changed? ? local_object.tap(&:save!) : local_object
+        local_object.save! if local_object.changed?
+        local_object.tap do |local_object|
+          @associations.each do |association|
+            klass = association.to_s.classify.constantize
+            klass.synchronize(remote: remote[association], scope: local_object,
+              delete_if_missing: @delete_if_missing)
+          end
+        end
       end
     end
   end

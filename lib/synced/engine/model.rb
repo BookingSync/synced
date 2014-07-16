@@ -15,11 +15,12 @@ module Synced::Engine::Model
   #   object which will be mapped to local object attributes.
   def synced(options = {})
     class_attribute :synced_id_key, :synced_updated_at_key, :synced_data_key,
-      :synced_local_attributes
+      :synced_local_attributes, :synced_associations
     self.synced_id_key           = options[:id_key] || :synced_id
     self.synced_updated_at_key   = options[:updated_at_key] || :synced_updated_at
     self.synced_data_key         = options[:data_key] || :synced_data
     self.synced_local_attributes = options[:local_attributes] || []
+    self.synced_associations     = options[:associations] || []
     include Synced::Engine::HasSyncedData
   end
 
@@ -50,7 +51,8 @@ module Synced::Engine::Model
       updated_at_key: synced_updated_at_key,
       data_key: synced_data_key,
       delete_if_missing: delete_if_missing,
-      local_attributes: synced_local_attributes
+      local_attributes: synced_local_attributes,
+      associations: synced_associations
     }
     synchronizer = Synced::Engine::Synchronizer.new(Array(remote), model_class,
       options)
