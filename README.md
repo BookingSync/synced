@@ -94,6 +94,23 @@ end
 
 This assumes that model has name and size attributes. On every sychronization these two attributes will be assigned with value of `remote_object.name` and `remote_object.size` appropriately.
 
+## Disabling synchronization for selected fields.
+
+In some cases you only need one attribute to be synchronized and nothing more.
+By default even when using local_attributes, whole remote object will be
+saved in the `synced_data` and its updated_at in the `synced_updated_at`.
+This may take additonal space in the database.
+In order to disable synchronizing these fields, set their names in the `synced` declaration to nil, as in the below example:
+
+```
+class Rental < ActiveRecord::Base
+  synced data_key: nil, updated_at_key: nil
+end
+```
+
+You cannot disable synchronizing `synced_id` as it's required to match local
+objects with the remote ones.
+
 ## Associations
 
 It's possible to synchronize objects together with it's associations. For that

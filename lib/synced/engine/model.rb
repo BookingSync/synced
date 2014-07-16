@@ -16,11 +16,12 @@ module Synced::Engine::Model
   def synced(options = {})
     class_attribute :synced_id_key, :synced_updated_at_key, :synced_data_key,
       :synced_local_attributes, :synced_associations
-    self.synced_id_key           = options[:id_key] || :synced_id
-    self.synced_updated_at_key   = options[:updated_at_key] || :synced_updated_at
-    self.synced_data_key         = options[:data_key] || :synced_data
-    self.synced_local_attributes = options[:local_attributes] || []
-    self.synced_associations     = options[:associations] || []
+    self.synced_id_key           = options.fetch(:id_key, :synced_id)
+    self.synced_updated_at_key   = options.fetch(:updated_at_key,
+      :synced_updated_at)
+    self.synced_data_key         = options.fetch(:data_key, :synced_data)
+    self.synced_local_attributes = options.fetch(:local_attributes, [])
+    self.synced_associations     = options.fetch(:associations, [])
     include Synced::Engine::HasSyncedData
   end
 
