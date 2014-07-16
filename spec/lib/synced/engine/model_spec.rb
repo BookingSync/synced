@@ -2,7 +2,7 @@ require "spec_helper"
 
 describe Synced::Engine::Model do
   class DummyModel < ActiveRecord::Base
-    synced
+    synced associations: %i(comments votes)
   end
 
   describe ".synced_id_key" do
@@ -20,6 +20,12 @@ describe Synced::Engine::Model do
   describe ".synced_data_key" do
     it "returns key used for storing remote data" do
       expect(DummyModel.synced_data_key).to eq :synced_data
+    end
+  end
+
+  describe ".synced_associations" do
+    it "returns association(s) for which synced is enabled" do
+      expect(DummyModel.synced_associations).to eq %i(comments votes)
     end
   end
 
