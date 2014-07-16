@@ -1,3 +1,4 @@
 class Rental < ActiveRecord::Base
-  include Synced::HasSyncedData
+  synced
+  belongs_to :account
 end
