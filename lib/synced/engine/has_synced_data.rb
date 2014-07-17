@@ -8,14 +8,16 @@ module Synced::Engine::HasSyncedData
   class SyncedData < Hashie::Mash; end
 
   included do
-    define_method "#{synced_data_key}=" do |object|
-      write_attribute synced_data_key, dump(object)
-    end
+    if synced_data_key
+      define_method "#{synced_data_key}=" do |object|
+        write_attribute synced_data_key, dump(object)
+      end
 
-    define_method synced_data_key do
-      instance_variable_get("@#{synced_data_key}") ||
-        instance_variable_set("@#{synced_data_key}",
-          SyncedData.new(loaded_synced_data))
+      define_method synced_data_key do
+        instance_variable_get("@#{synced_data_key}") ||
+          instance_variable_set("@#{synced_data_key}",
+            SyncedData.new(loaded_synced_data))
+      end
     end
   end
 

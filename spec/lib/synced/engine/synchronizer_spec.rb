@@ -175,6 +175,18 @@ describe Synced::Engine::Synchronizer do
     end
   end
 
+  describe "#perform on model with disabled synced_data and synced_updated_at" do
+    it "synchronizes remote objects correctly" do
+      expect {
+        Photo.synchronize(remote: [remote_object(id: 17)])
+      }.to change { Photo.count }.by(1)
+      photo = Photo.last
+      expect(photo.synced_id).to eq(17)
+      expect(photo).not_to respond_to(:synced_data)
+      expect(photo).not_to respond_to(:synced_updated_at)
+    end
+  end
+
   describe "synced object" do
     before { Rental.synchronize(remote: remote_objects) }
     let(:rental) { Rental.last }

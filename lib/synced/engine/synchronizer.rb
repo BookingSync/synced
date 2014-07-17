@@ -44,11 +44,7 @@ class Synced::Engine::Synchronizer
 
       @remote_objects.map do |remote|
         local_object = local_object_by_remote_id(remote.id) || scope.new
-        local_object.attributes = {
-          @data_key        => remote,
-          @id_key          => remote.id,
-          @updated_at_key  => remote.updated_at,
-        }
+        local_object.attributes = default_attributes_mapping(remote)
         local_object.attributes = local_attributes_mapping(remote)
         local_object.save! if local_object.changed?
         local_object.tap do |local_object|
@@ -66,6 +62,14 @@ class Synced::Engine::Synchronizer
 
   def local_attributes_mapping(remote)
     Hash[@local_attributes.map { |k| [k, remote[k]] }]
+  end
+
+  def default_attributes_mapping(remote)
+    {}.tap do |attributes|
+      attributes[@id_key] = remote.id
+      attributes[@data_key] = remote if @data_key
+      attributes[@updated_at_key] = remote.updated_at if @updated_at_key
+    end
   end
 
   def scope

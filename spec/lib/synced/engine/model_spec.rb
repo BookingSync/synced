@@ -54,6 +54,12 @@ describe Synced::Engine::Model do
       end
       expect(klass.synced_data_key).to eq :remote_data
     end
+
+    context "when data_key set to nil" do
+      it "doesn't create reader/writer for synced_data" do
+        expect(Photo.new).not_to respond_to(:synced_data)
+      end
+    end
   end
 
   it "synchronizes model" do
