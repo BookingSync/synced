@@ -27,7 +27,8 @@ module Synced::Engine::Model
 
   # Performs synchronization of given remote objects to local database.
   #
-  # @param remote [Array] - Remote objects to be synchronized with local db.
+  # @param remote [Array] - Remote objects to be synchronized with local db. If
+  #   it's nil then synchronizer will make request on it's own.
   # @param model_class [Class] - ActiveRecord model class to which remote objects
   #   will be synchronized.
   # @param scope [ActiveRecord::Base] - Within this object scope local objects
@@ -55,7 +56,7 @@ module Synced::Engine::Model
       local_attributes: synced_local_attributes,
       associations: synced_associations
     }
-    synchronizer = Synced::Engine::Synchronizer.new(Array(remote), model_class,
+    synchronizer = Synced::Engine::Synchronizer.new(remote, model_class,
       options)
     synchronizer.perform
   end

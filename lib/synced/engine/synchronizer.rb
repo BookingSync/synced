@@ -5,9 +5,9 @@ class Synced::Engine::Synchronizer
 
   # Initializes a new Synchronizer
   #
-  # @param remote_objects [Array] Array of objects to be synchronized with
-  #   local database. Objects need to respond to at least :id and :updated_at
-  #   messages.
+  # @param remote_objects [Array|NilClass] Array of objects to be synchronized
+  #   with local database. Objects need to respond to at least :id message.
+  #   If it's nil, then synchronizer will fetch the remote objects on it's own.
   # @param model_class [Class] ActiveRecord model class from which local objects
   #   will be created.
   # @param options [Hash]
@@ -25,7 +25,6 @@ class Synced::Engine::Synchronizer
   #   missing in the remote Array will be destroyed in the local db. This
   #   option is passed to association synchronizer.
   def initialize(remote_objects, model_class, options = {})
-    @remote_objects    = remote_objects
     @model_class       = model_class
     @scope             = options[:scope]
     @id_key            = options[:id_key]
@@ -34,16 +33,17 @@ class Synced::Engine::Synchronizer
     @delete_if_missing = options[:delete_if_missing]
     @local_attributes  = Array(options[:local_attributes])
     @associations      = Array(options[:associations])
+    @remote_objects    = Array(remote_objects) if remote_objects
   end
 
   def perform
-    scope.transaction do
+    relation_scope.transaction do
       if @delete_if_missing
-        scope.where.not(id_key => remote_objects_ids).destroy_all
+        relation_scope.where.not(id_key => remote_objects_ids).destroy_all
       end
 
-      @remote_objects.map do |remote|
-        local_object = local_object_by_remote_id(remote.id) || scope.new
+      remote_objects.map do |remote|
+        local_object = local_object_by_remote_id(remote.id) || relation_scope.new
         local_object.attributes = default_attributes_mapping(remote)
         local_object.attributes = local_attributes_mapping(remote)
         local_object.save! if local_object.changed?
@@ -72,12 +72,26 @@ class Synced::Engine::Synchronizer
     end
   end
 
-  def scope
-    if @scope
-      @scope.send(@model_class.to_s.tableize)
-    else
-      @model_class
-    end
+  # Returns relation within which local objects are created/edited and removed
+  # If no scope is provided, the relation_scope will be class on which
+  # .synchronize method is called.
+  # If scope is provided, like: account, then relation_scope will be a relation
+  # account.rentals (given we run .synchronize on Rental class)
+  #
+  # @return [ActiveRecord::Relation|Class]
+  def relation_scope
+    @scope ? @scope.send(resource_name) : @model_class
+  end
+
+  # Returns api client from the closest possible source.
+  #
+  # @raise [BookingSync::API::Unauthorized] - On unauthorized user
+  # @return [BookingSync::API::Client] BookingSync API client
+  def api
+    closest = [@scope, @scope.class, @model_class].detect do |o|
+                o.respond_to?(:api)
+              end
+    closest && closest.api || raise(MissingAPIClient.new(@scope, @model_class))
   end
 
   def local_object_by_remote_id(remote_id)
@@ -85,10 +99,44 @@ class Synced::Engine::Synchronizer
   end
 
   def local_objects
-    @local_objects ||= scope.where(id_key => remote_objects_ids).to_a
+    @local_objects ||= relation_scope.where(id_key => remote_objects_ids).to_a
   end
 
   def remote_objects_ids
-    @remote_objects_ids ||= @remote_objects.map(&:id)
+    @remote_objects_ids ||= remote_objects.map(&:id)
+  end
+
+  def remote_objects
+    @remote_objects ||= fetch_remote_objects
+  end
+
+  def fetch_remote_objects
+    api.get("/#{resource_name}", api_request_options)
+  end
+
+  def api_request_options
+    {}.tap do |options|
+      options[:include] = @associations if @associations.present?
+    end
+  end
+
+  def resource_name
+    @model_class.to_s.tableize
+  end
+
+  class MissingAPIClient < StandardError
+    def initialize(scope, model_class)
+      @scope = scope
+      @model_class = model_class
+    end
+
+    def message
+      if @scope
+        %Q{Missing BookingSync API client in #{@scope} object or
+#{@scope.class} class}
+      else
+        %Q{Missing BookingSync API client in #{@model_class} class}
+      end
+    end
   end
 end
