@@ -187,6 +187,100 @@ describe Synced::Engine::Synchronizer do
     end
   end
 
+  describe "#perform without remote_objects given" do
+    before do
+      allow_any_instance_of(BookingSync::API::Client).to receive(:get)
+        .and_return(remote_objects)
+    end
+
+    it "makes an api request" do
+      expect(account.api).to receive(:get).with("/rentals", {})
+        .and_return(remote_objects)
+      expect {
+        Rental.synchronize(scope: account)
+      }.to change { account.rentals.count }.by(1)
+    end
+
+    it "synchronizes given model" do
+      Rental.synchronize(scope: account)
+      rental = account.rentals.first
+      expect(rental.synced_data).to eq(remote_objects.first)
+      expect(rental.synced_updated_at).to eq("2013-01-01 15:03:01")
+    end
+
+    context "with associations" do
+      let(:remote_objects) { [
+        remote_object(id: 12, photos: [
+          remote_object(id: 100, filename: 'b.jpg')])
+      ] }
+
+      it "makes api request with include" do
+        expect(Location.api).to receive(:get)
+          .with("/locations", {include: [:photos]})
+          .and_return(remote_objects)
+        Location.synchronize
+      end
+
+      it "synchronizes parent model and its associations" do
+        allow(Location.api).to receive(:get).and_return(remote_objects)
+        expect {
+          expect {
+            Location.synchronize
+          }.to change { Location.count }.by(1)
+        }.to change { Photo.count }.by(1)
+        location = Location.last
+        expect(location.synced_id).to eq(12)
+        photo = location.photos.first
+        expect(photo.synced_id).to eq(100)
+        expect(photo.filename).to eq('b.jpg')
+      end
+    end
+
+    describe "#api" do
+      let(:api) { double() }
+
+      context "when scope responds to api method" do
+        it "uses api client from scope" do
+          location = Location.create
+          allow(location).to receive(:api).and_return(double())
+          expect(api).not_to receive(:get)
+          expect(Location).not_to receive(:api)
+          expect(location.api).to receive(:get).with("/photos", {})
+            .and_return([])
+          Photo.synchronize(scope: location)
+        end
+      end
+
+      context "when scope doesn't respond to api but scope class does" do
+        it "uses api client from scope class" do
+          expect(api).not_to receive(:get)
+          expect(Location.api).to receive(:get).with("/photos", {})
+            .and_return([])
+          Photo.synchronize(scope: Location.create)
+        end
+      end
+
+      context "when model class responds to api" do
+        it "uses api client from model class" do
+          expect(api).to receive(:get).with("/photos", {})
+            .and_return([])
+          expect(Photo).to receive(:api).and_return(api)
+          Photo.synchronize
+        end
+      end
+
+      context "api client can't be found" do
+        it "raises an exception" do
+          expect {
+            Photo.synchronize
+          }.to raise_error(Synced::Engine::Synchronizer::MissingAPIClient) { |ex|
+            expect(ex.message).to eq "Missing BookingSync API client in Photo class"
+          }
+        end
+      end
+    end
+  end
+
   describe "synced object" do
     before { Rental.synchronize(remote: remote_objects) }
     let(:rental) { Rental.last }
