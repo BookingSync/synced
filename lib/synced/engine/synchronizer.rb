@@ -15,32 +15,40 @@ class Synced::Engine::Synchronizer
   #   will be synchronized. By default it's model_class.
   # @option options [Symbol] id_key: attribute name under which
   #   remote object's ID is stored, default is :synced_id.
-  # @option options [Symbol] updated_at_key: attribute name under which
-  #   remote object's updated_at is stored, default is :synced_updated_at
+  # @option options [Symbol] synced_all_at_key: attribute name under which
+  #   remote object's sync time is stored, default is :synced_all_at
   # @option options [Symbol] data_key: attribute name under which remote
   #   object's data is stored.
   # @option options [Array] local_attributes: Array of attributes in the remote
   #   object which will be mapped to local object attributes.
-  # @option options [Boolean] delete_if_missing: All local objects which are
-  #   missing in the remote Array will be destroyed in the local db. This
-  #   option is passed to association synchronizer.
+  # @option options [Boolean] remove: If it's true all local objects within
+  #   current scope which are not present in the remote array will be destroyed.
+  #   If only_updated is enabled, ids of objects to be deleted will be taken
+  #   from the meta part. By default if cancel_at column is present, all
+  #   missing local objects will be canceled with cancel_all,
+  #   if it's missing, all will be destroyed with destroy_all.
+  #   You can also force method to remove local objects by passing it
+  #   to remove: :mark_as_missing.
+  # @option options [Boolean] only_updated: If true requests to API will take
+  #   advantage of updated_since param and fetch only created/changed/deleted
+  #   remote objects
   def initialize(remote_objects, model_class, options = {})
     @model_class       = model_class
     @scope             = options[:scope]
     @id_key            = options[:id_key]
-    @updated_at_key    = options[:updated_at_key]
+    @synced_all_at_key = options[:synced_all_at_key]
     @data_key          = options[:data_key]
-    @delete_if_missing = options[:delete_if_missing]
+    @remove            = options[:remove]
+    @only_updated      = options[:only_updated]
     @local_attributes  = Array(options[:local_attributes])
     @associations      = Array(options[:associations])
     @remote_objects    = Array(remote_objects) if remote_objects
+    @request_performed = false
   end
 
   def perform
     relation_scope.transaction do
-      if @delete_if_missing
-        relation_scope.where.not(id_key => remote_objects_ids).destroy_all
-      end
+      remove_relation.send(remove_strategy) if @remove
 
       remote_objects.map do |remote|
         local_object = local_object_by_remote_id(remote.id) || relation_scope.new
@@ -51,8 +59,12 @@ class Synced::Engine::Synchronizer
           @associations.each do |association|
             klass = association.to_s.classify.constantize
             klass.synchronize(remote: remote[association], scope: local_object,
-              delete_if_missing: @delete_if_missing)
+              remove: @remove)
           end
+        end
+      end.tap do |local_objects|
+        if updated_since_enabled? && @request_performed
+          relation_scope.update_all(@synced_all_at_key => Time.now)
         end
       end
     end
@@ -68,7 +80,6 @@ class Synced::Engine::Synchronizer
     {}.tap do |attributes|
       attributes[@id_key] = remote.id
       attributes[@data_key] = remote if @data_key
-      attributes[@updated_at_key] = remote.updated_at if @updated_at_key
     end
   end
 
@@ -110,18 +121,53 @@ class Synced::Engine::Synchronizer
     @remote_objects ||= fetch_remote_objects
   end
 
+  def deleted_remote_objects_ids
+    api.last_response.meta[:deleted_ids]
+  end
+
   def fetch_remote_objects
-    api.get("/#{resource_name}", api_request_options)
+    api.get("/#{resource_name}", api_request_options).tap do
+      @request_performed = true
+    end
   end
 
   def api_request_options
     {}.tap do |options|
       options[:include] = @associations if @associations.present?
+      options[:updated_since] = minimum_updated_at if updated_since_enabled?
     end
+  end
+
+  def minimum_updated_at
+    relation_scope.minimum(@synced_all_at_key)
+  end
+
+  def updated_since_enabled?
+    @only_updated && @synced_all_at_key
   end
 
   def resource_name
     @model_class.to_s.tableize
+  end
+
+  def remove_strategy
+    @remove == true ? default_remove_strategy : @remove
+  end
+
+  def default_remove_strategy
+    if @model_class.column_names.include?("canceled_at")
+      :cancel_all
+    else
+      :destroy_all
+    end
+  end
+
+  def remove_relation
+    if @only_updated
+      relation_scope.where(id_key => deleted_remote_objects_ids)
+    else
+      relation_scope.where.not(id_key => remote_objects_ids)
+    end
   end
 
   class MissingAPIClient < StandardError

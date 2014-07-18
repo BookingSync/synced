@@ -72,13 +72,14 @@ By default synced stores remote object in the following db columns.
 
     `synced_id` - ID of the remote object
     `synced_data` - Whole remote object is serialized into this attribute
-    `synced_update_at` - Remote object's updated at
+    `synced_all_at` - Synchronization time of the local object when using
+                      updated_since param
 
 You can configure your own fields in `synced` declaration in your model.
 
 ```
 class Rental < ActiveRecord::Base
-  synced id_key: :remote_id, data_key: :remote_data, updated_at_key: :remote_updated_at
+  synced id_key: :remote_id, data_key: :remote_data, synced_all_at_key: :remote_all_synced_at
 end
 ```
 
@@ -98,13 +99,13 @@ This assumes that model has name and size attributes. On every sychronization th
 
 In some cases you only need one attribute to be synchronized and nothing more.
 By default even when using local_attributes, whole remote object will be
-saved in the `synced_data` and its updated_at in the `synced_updated_at`.
+saved in the `synced_data` and its updated_at in the `synced_all_at`.
 This may take additonal space in the database.
 In order to disable synchronizing these fields, set their names in the `synced` declaration to nil, as in the below example:
 
 ```
 class Rental < ActiveRecord::Base
-  synced data_key: nil, updated_at_key: nil
+  synced data_key: nil, synced_all_at_key: nil
 end
 ```
 
@@ -139,4 +140,3 @@ photos association will be taken.
 ```ruby
 Location.synchronize(remote: remote_locations)
 ```
-
