@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20140717090913) do
+ActiveRecord::Schema.define(version: 20140721090439) do
 
   create_table "accounts", force: true do |t|
     t.string   "name"
@@ -28,10 +28,20 @@ ActiveRecord::Schema.define(version: 20140717090913) do
     t.text     "remote_data"
   end
 
+  create_table "bookings", force: true do |t|
+    t.string   "name"
+    t.datetime "synced_all_at"
+    t.integer  "synced_id"
+    t.text     "synced_data"
+    t.integer  "account_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
   create_table "locations", force: true do |t|
     t.string   "name"
     t.integer  "synced_id"
-    t.datetime "synced_updated_at"
+    t.datetime "synced_all_at"
     t.text     "synced_data"
     t.datetime "created_at"
     t.datetime "updated_at"
@@ -43,6 +53,7 @@ ActiveRecord::Schema.define(version: 20140717090913) do
     t.integer  "location_id"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.datetime "canceled_at"
   end
 
   create_table "rentals", force: true do |t|
@@ -51,7 +62,7 @@ ActiveRecord::Schema.define(version: 20140717090913) do
     t.datetime "updated_at"
     t.integer  "synced_id"
     t.text     "synced_data"
-    t.datetime "synced_updated_at"
+    t.datetime "synced_all_at"
     t.integer  "account_id"
   end
 

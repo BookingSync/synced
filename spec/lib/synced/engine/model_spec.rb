@@ -11,9 +11,9 @@ describe Synced::Engine::Model do
     end
   end
 
-  describe ".synced_updated_at_key" do
-    it "returns key used for storing remote updated at" do
-      expect(DummyModel.synced_updated_at_key).to eq :synced_updated_at
+  describe ".synced_all_at_key" do
+    it "returns key used for storing object's synchronization time" do
+      expect(DummyModel.synced_all_at_key).to eq :synced_all_at
     end
   end
 
@@ -41,11 +41,11 @@ describe Synced::Engine::Model do
       expect(klass.synced_id_key).to eq :remote_id
     end
 
-    it "allows to set custom synced_updated_at_key" do
+    it "allows to set custom synced_all_at_key" do
       klass = Class.new(ActiveRecord::Base) do
-        synced updated_at_key: :remote_updated_at
+        synced synced_all_at_key: :remote_updated_at
       end
-      expect(klass.synced_updated_at_key).to eq :remote_updated_at
+      expect(klass.synced_all_at_key).to eq :remote_updated_at
     end
 
     it "allows to set custom synced_data_key" do

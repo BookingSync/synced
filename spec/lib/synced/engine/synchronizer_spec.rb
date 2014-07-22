@@ -3,12 +3,13 @@ require "spec_helper"
 describe Synced::Engine::Synchronizer do
   let(:account) { Account.create(name: "test") }
   let(:remote_objects) {
-    [remote_object(id: 42, name: "Remote", updated_at: "2013-01-01 15:03:01")]
+    [remote_object(id: 42, name: "Remote")]
   }
 
-  describe "#perform" do
-    context "remote objects are missing in the local db" do
+  describe "#perform with remote objects given" do
+    context "and they are missing in the local db" do
       let(:synchronize) { Rental.synchronize(remote: remote_objects) }
+
       it "creates missing remote objects" do
         expect {
           synchronize
@@ -19,12 +20,19 @@ describe Synced::Engine::Synchronizer do
         rentals = synchronize
         expect(rentals.size).to eq 1
       end
+
+      it "doesn't set synced_all_at" do
+        synchronize
+        rental = Rental.find_by(synced_id: 42)
+        expect(rental.synced_all_at).to be_nil
+      end
     end
 
-    context "remote object exists in the local db" do
+    context "and they are present in the local db" do
       let(:synchronize) { Rental.synchronize(remote: remote_objects) }
       let!(:rental) { account.rentals.create(synced_data: { id: 42,
-        name: "Old Remote" }, synced_id: 42) }
+        name: "Old Remote" }, synced_id: 42,
+        synced_all_at: "2014-01-17 11:11:11 UTC") }
 
       it "doesn't create another local object" do
         expect { synchronize }.not_to change { Rental.count }
@@ -41,16 +49,24 @@ describe Synced::Engine::Synchronizer do
       end
 
       context "and it's not outdated" do
-        let(:remote_objects) { [remote_object(id: 42, name: "Old Remote")] }
+        let(:remote_objects) { [
+          remote_object(id: 42, name: "Old Remote")
+        ] }
 
         it "doesn't update the local object" do
           expect_any_instance_of(Rental).to receive(:save!).never
           synchronize
         end
       end
+
+      it "doesn't change synced_all_at" do
+        expect {
+          synchronize
+        }.not_to change { Rental.find_by(synced_id: 42).synced_all_at }
+      end
     end
 
-    context "with option delete_if_missing: true" do
+    context "with option remove: true" do
       before do
         Rental.create(name: "Test", synced_id: 15)
         Rental.create(name: "Test", synced_id: 42)
@@ -58,15 +74,51 @@ describe Synced::Engine::Synchronizer do
 
       it "deletes local objects which are missing in the remote objects" do
         expect {
-          Rental.synchronize(remote: remote_objects, delete_if_missing: true)
+          Rental.synchronize(remote: remote_objects, remove: true)
         }.to change { Rental.count }.by(-1)
+      end
+
+      context "when canceled_at column is present" do
+        let(:location) { Location.create(name: "Bahamas") }
+        let!(:photo) { Photo.create(synced_id: 12) }
+        let!(:photo_to_cancel) { location.photos.create(synced_id: 1) }
+        let(:remote_photos) { [
+          remote_object(id: 19, filename: 'a.jpg')
+        ] }
+
+        it "cancels local objects" do
+          expect {
+            Photo.synchronize(remote: remote_photos, scope: location,
+              remove: true)
+          }.to change { Photo.find_by(synced_id: 1).canceled_at }
+        end
+
+        it "cancels only objects within given scope" do
+          expect {
+            Photo.synchronize(remote: remote_photos, scope: location,
+              remove: true)
+          }.not_to change { Photo.find_by(synced_id: 12).canceled_at }
+        end
+
+        context "when remove: destroy_all is provided" do
+          it "destroys instead of canceling" do
+            expect {
+              Photo.synchronize(remote: remote_photos, scope: location,
+                remove: :destroy_all)
+            }.to change { Photo.where(synced_id: 1).count }.from(1).to(0)
+          end
+        end
+      end
+
+      it "doesn't update synced_all_at" do
+        Rental.synchronize(remote: remote_objects)
       end
     end
 
     describe "runs inside transaction" do
       let(:remote_objects) { [
-        remote_object(id: 1, name: "test", updated_at: 2.days.ago),
-        remote_object(id: 1, name: "invalid", updated_at: 2.days.ago)
+        remote_object(id: 1, name: "test"),
+        remote_object(id: 1, name: "invalid")
       ] }
 
       it "and doesn't save anything if saving one record fails" do
@@ -81,8 +133,12 @@ describe Synced::Engine::Synchronizer do
 
   describe "#perform with custom attributes" do
     before(:all) do
-      Amenity.synchronize(remote: [remote_object(id: 12, title: "Internet",
-        updated_at: "2014-01-17 11:11:11")])
+      Timecop.freeze("2014-01-17 11:11:11 UTC") do
+        Amenity.synchronize(remote: [
+          remote_object(id: 12, title: "Internet",
+            updated_at: "2014-01-17 11:11:11")
+        ])
+      end
       @amenity = Amenity.last
     end
 
@@ -96,12 +152,6 @@ describe Synced::Engine::Synchronizer do
     describe "#remote_id" do
       it "returns remote object's ID" do
         expect(@amenity.remote_id).to eq 12
-      end
-    end
-
-    describe "#remote_updated_at" do
-      it "returns remote object's updated at" do
-        expect(@amenity.remote_updated_at).to eq("2014-01-17 11:11:11")
       end
     end
   end
@@ -118,7 +168,7 @@ describe Synced::Engine::Synchronizer do
       account.rentals.create
       expect {
         Rental.synchronize(remote: [], scope: account,
-          delete_if_missing: true)
+          remove: true)
       }.to change { account.rentals.count }.by(-1)
       expect(Rental.find_by(name: "will survive")).to be_present
     end
@@ -163,19 +213,19 @@ describe Synced::Engine::Synchronizer do
       expect(Location.find_by(synced_id: 17).photos.count).to eq 1
     end
 
-    context "with option delete_if_missing: true" do
+    context "with option remove: true" do
       let(:location) { Location.create(synced_id: 13) }
       let!(:photo) { location.photos.create(synced_id: 131) }
       let!(:deleted_photo) { location.photos.create(synced_id: 1111) }
 
-      it "removes local association objects if missing in the remote data" do
-        Location.synchronize(remote: locations, delete_if_missing: true)
-        expect(Photo.find_by(synced_id: 1111)).to be_nil
+      it "removes/cancels local association objects if missing in the remote data" do
+        Location.synchronize(remote: locations, remove: true)
+        expect(Photo.find_by(synced_id: 1111).canceled_at).not_to be_nil
       end
     end
   end
 
-  describe "#perform on model with disabled synced_data and synced_updated_at" do
+  describe "#perform on model with disabled synced_data and synced_all_at" do
     it "synchronizes remote objects correctly" do
       expect {
         Photo.synchronize(remote: [remote_object(id: 17)])
@@ -183,11 +233,11 @@ describe Synced::Engine::Synchronizer do
       photo = Photo.last
       expect(photo.synced_id).to eq(17)
       expect(photo).not_to respond_to(:synced_data)
-      expect(photo).not_to respond_to(:synced_updated_at)
+      expect(photo).not_to respond_to(:synced_all_at)
     end
   end
 
-  describe "#perform without remote_objects given" do
+  describe "#perform without remote objects given" do
     before do
       allow_any_instance_of(BookingSync::API::Client).to receive(:get)
         .and_return(remote_objects)
@@ -205,7 +255,6 @@ describe Synced::Engine::Synchronizer do
       Rental.synchronize(scope: account)
       rental = account.rentals.first
       expect(rental.synced_data).to eq(remote_objects.first)
-      expect(rental.synced_updated_at).to eq("2013-01-01 15:03:01")
     end
 
     context "with associations" do
@@ -279,15 +328,68 @@ describe Synced::Engine::Synchronizer do
         end
       end
     end
+
+    context "and with only updated strategy" do
+      let(:remote_objects) {[
+        remote_object(id: 1, name: "test1"),
+        remote_object(id: 3, name: "test3"),
+        remote_object(id: 20, name: "test20")
+      ]}
+      let!(:booking) { account.bookings.create(name: "test2",
+        synced_id: 2, synced_all_at: "2010-01-01 12:12:12") }
+      let!(:second_booking) { account.bookings.create(name: "test2",
+        synced_id: 200, synced_all_at: "2014-12-12 12:12:12") }
+      before do
+        allow(account.api).to receive(:get).and_return(remote_objects)
+        allow(account.api).to receive(:last_response)
+          .and_return(Hashie::Mash.new(meta: {deleted_ids: [2, 17]}))
+      end
+
+      it "makes request to the api with oldest synced_all_at" do
+        expect(account.api).to receive(:get)
+          .with("/bookings", {updated_since: "2010-01-01 12:12:12"})
+          .and_return(remote_objects)
+        Booking.synchronize(scope: account)
+      end
+
+      context "when remove: true" do
+        it "destroys local object by ids from response's meta" do
+          expect {
+            Booking.synchronize(scope: account, remove: true)
+          }.to change { Booking.where(synced_id: 2).count }.from(1).to(0)
+        end
+      end
+
+      it "updates synced_all_at for all local object within current scope" do
+        expect {
+          expect {
+            Booking.synchronize(scope: account)
+          }.to change { Booking.find_by(synced_id: 200).synced_all_at }
+        }.to change { Booking.find_by(synced_id: 2).synced_all_at }
+      end
+    end
+  end
+
+  describe "#perform with remote objects given" do
+    context "and only_updated strategy" do
+      let!(:booking) { account.bookings.create(synced_id: 42) }
+
+      it "doesn't update synced_all_at" do
+        expect{
+          Booking.synchronize(remote: [remote_object(id: 42)],
+            scope: account)
+        }.not_to change { Booking.find_by(synced_id: 42).synced_all_at }
+      end
+    end
   end
 
   describe "synced object" do
-    before { Rental.synchronize(remote: remote_objects) }
-    let(:rental) { Rental.last }
-
-    it "has synced_updated_at to remote updated at" do
-      expect(rental.synced_updated_at).to eq "2013-01-01 15:03:01"
+    before do
+      Timecop.freeze("2013-01-01 15:03:01 UTC") do
+        Rental.synchronize(remote: remote_objects)
+      end
     end
+    let(:rental) { Rental.last }
 
     it "has synced_id to remote object id" do
       expect(rental.synced_id).to eq 42
