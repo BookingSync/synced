@@ -1,3 +1,6 @@
+[![Code Climate](https://codeclimate.com/github/BookingSync/synced.png)](https://codeclimate.com/github/BookingSync/synced)
+[![Build Status](https://travis-ci.org/BookingSync/synced.png?branch=master)](https://travis-ci.org/BookingSync/synced)
+
 # Synced
 
 Synced is a Rails Engine that helps you keep local models synchronized with
