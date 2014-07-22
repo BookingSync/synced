@@ -1,4 +1,4 @@
-require "synced/engine"
+require "synced/rails"
 
 module Synced
 end

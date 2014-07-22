@@ -1,6 +1,6 @@
-require "synced/engine/synchronizer"
+require "synced/synchronizer"
 
-module Synced::Engine::Model
+module Synced::Model
   # Enables synced for ActiveRecord model.
   #
   # @param options [Hash] Configuration options for synced. They are inherited
@@ -27,7 +27,7 @@ module Synced::Engine::Model
     self.synced_local_attributes = options.fetch(:local_attributes, [])
     self.synced_associations     = options.fetch(:associations, [])
     self.synced_only_updated     = options.fetch(:only_updated, false)
-    include Synced::Engine::HasSyncedData
+    include Synced::HasSyncedData
   end
 
   # Performs synchronization of given remote objects to local database.
@@ -67,8 +67,7 @@ module Synced::Engine::Model
       associations: synced_associations,
       only_updated: synced_only_updated
     }
-    synchronizer = Synced::Engine::Synchronizer.new(remote, model_class,
-      options)
+    synchronizer = Synced::Synchronizer.new(remote, model_class, options)
     synchronizer.perform
   end
 end

@@ -1,6 +1,6 @@
 require "spec_helper"
 
-describe Synced::Engine::Model do
+describe Synced::Model do
   class DummyModel < ActiveRecord::Base
     synced associations: %i(comments votes)
   end

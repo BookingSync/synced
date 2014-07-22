@@ -1,6 +1,6 @@
 # Synchronizer class which performs actual synchronization between
 # local database and given array of remote objects
-class Synced::Engine::Synchronizer
+class Synced::Synchronizer
   attr_reader :id_key
 
   # Initializes a new Synchronizer

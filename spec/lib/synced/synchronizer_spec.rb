@@ -1,6 +1,6 @@
 require "spec_helper"
 
-describe Synced::Engine::Synchronizer do
+describe Synced::Synchronizer do
   let(:account) { Account.create(name: "test") }
   let(:remote_objects) {
     [remote_object(id: 42, name: "Remote")]
@@ -322,7 +322,7 @@ describe Synced::Engine::Synchronizer do
         it "raises an exception" do
           expect {
             Photo.synchronize
-          }.to raise_error(Synced::Engine::Synchronizer::MissingAPIClient) { |ex|
+          }.to raise_error(Synced::Synchronizer::MissingAPIClient) { |ex|
             expect(ex.message).to eq "Missing BookingSync API client in Photo class"
           }
         end

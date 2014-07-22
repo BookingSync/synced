@@ -3,7 +3,7 @@ require 'hashie'
 # Provide a serialized attribute for models. This attribute is `synced_data_key`
 # which by default is `:synced_data`. This is a friendlier alternative to
 # `serialize` with respect to dirty attributes.
-module Synced::Engine::HasSyncedData
+module Synced::HasSyncedData
   extend ActiveSupport::Concern
   class SyncedData < Hashie::Mash; end
 
