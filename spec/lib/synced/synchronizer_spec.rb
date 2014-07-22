@@ -240,11 +240,17 @@ describe Synced::Synchronizer do
     end
 
     it "makes an api request" do
-      expect(account.api).to receive(:get).with("/rentals", {})
-        .and_return(remote_objects)
+      expect(account.api).to receive(:get).with("/rentals",
+        {auto_paginate: true}).and_return(remote_objects)
       expect {
         Rental.synchronize(scope: account)
       }.to change { account.rentals.count }.by(1)
+    end
+
+    it "make an api request with auto_paginate enabled" do
+      expect(account.api).to receive(:get).with("/rentals",
+        {auto_paginate: true}).and_return(remote_objects)
+      Rental.synchronize(scope: account)
     end
 
     it "synchronizes given model" do
@@ -261,7 +267,7 @@ describe Synced::Synchronizer do
 
       it "makes api request with include" do
         expect(Location.api).to receive(:get)
-          .with("/locations", {include: [:photos]})
+          .with("/locations", {include: [:photos], auto_paginate: true})
           .and_return(remote_objects)
         Location.synchronize
       end
@@ -290,8 +296,8 @@ describe Synced::Synchronizer do
           allow(location).to receive(:api).and_return(double())
           expect(api).not_to receive(:get)
           expect(Location).not_to receive(:api)
-          expect(location.api).to receive(:get).with("/photos", {})
-            .and_return([])
+          expect(location.api).to receive(:get)
+            .with("/photos", {auto_paginate: true}).and_return([])
           Photo.synchronize(scope: location)
         end
       end
@@ -299,15 +305,15 @@ describe Synced::Synchronizer do
       context "when scope doesn't respond to api but scope class does" do
         it "uses api client from scope class" do
           expect(api).not_to receive(:get)
-          expect(Location.api).to receive(:get).with("/photos", {})
-            .and_return([])
+          expect(Location.api).to receive(:get).with("/photos",
+            {auto_paginate: true}).and_return([])
           Photo.synchronize(scope: Location.create)
         end
       end
 
       context "when model class responds to api" do
         it "uses api client from model class" do
-          expect(api).to receive(:get).with("/photos", {})
+          expect(api).to receive(:get).with("/photos", {auto_paginate: true})
             .and_return([])
           expect(Photo).to receive(:api).and_return(api)
           Photo.synchronize
@@ -343,8 +349,8 @@ describe Synced::Synchronizer do
 
       it "makes request to the api with oldest synced_all_at" do
         expect(account.api).to receive(:get)
-          .with("/bookings", {updated_since: "2010-01-01 12:12:12"})
-          .and_return(remote_objects)
+          .with("/bookings", {updated_since: "2010-01-01 12:12:12",
+            auto_paginate: true}).and_return(remote_objects)
         Booking.synchronize(scope: account)
       end
 

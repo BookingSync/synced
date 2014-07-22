@@ -135,6 +135,7 @@ class Synced::Synchronizer
     {}.tap do |options|
       options[:include] = @associations if @associations.present?
       options[:updated_since] = minimum_updated_at if updated_since_enabled?
+      options[:auto_paginate] = true
     end
   end
 
