@@ -109,10 +109,6 @@ describe Synced::Synchronizer do
           end
         end
       end
-
-      it "doesn't update synced_all_at" do
-        Rental.synchronize(remote: remote_objects)
-      end
     end
 
     describe "runs inside transaction" do
