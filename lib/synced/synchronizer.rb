@@ -40,6 +40,7 @@ class Synced::Synchronizer
     @data_key          = options[:data_key]
     @remove            = options[:remove]
     @only_updated      = options[:only_updated]
+    @include           = options[:include]
     @local_attributes  = Array(options[:local_attributes])
     @associations      = Array(options[:associations])
     @remote_objects    = Array(remote_objects) if remote_objects
@@ -134,6 +135,10 @@ class Synced::Synchronizer
   def api_request_options
     {}.tap do |options|
       options[:include] = @associations if @associations.present?
+      if @include.present?
+        options[:include] ||= []
+        options[:include] += @include
+      end
       options[:updated_since] = minimum_updated_at if updated_since_enabled?
       options[:auto_paginate] = true
     end

@@ -370,6 +370,27 @@ describe Synced::Synchronizer do
         }.to change { Booking.find_by(synced_id: 2).synced_all_at }
       end
     end
+
+    context "when include: provided" do
+      it "passes include to the API request" do
+        expect(account.api).to receive(:get)
+          .with("/bookings", { updated_since: nil, auto_paginate: true,
+            include: [:comments, :reviews] })
+          .and_return(remote_objects)
+        Booking.synchronize(scope: account, include: [:comments, :reviews])
+      end
+
+      context "and associations present" do
+        let(:remote_objects) { [remote_object(id: 42, photos: [])] }
+        it "adds include and associations to the API request" do
+          expect(Location.api).to receive(:get)
+            .with("/locations", { auto_paginate: true,
+              include: [:photos, :comments] })
+            .and_return(remote_objects)
+          Location.synchronize(include: [:comments])
+        end
+      end
+    end
   end
 
   describe "#perform with remote objects given" do

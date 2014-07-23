@@ -56,7 +56,8 @@ module Synced::Model
   #
   #  Rental.synchronize(remote: remote_rentals, scope: website)
   #
-  def synchronize(remote: nil, model_class: self, scope: nil, remove: false)
+  def synchronize(remote: nil, model_class: self, scope: nil, remove: false,
+    include: nil)
     options = {
       scope: scope,
       id_key: synced_id_key,
@@ -65,7 +66,8 @@ module Synced::Model
       remove: remove,
       local_attributes: synced_local_attributes,
       associations: synced_associations,
-      only_updated: synced_only_updated
+      only_updated: synced_only_updated,
+      include: include
     }
     synchronizer = Synced::Synchronizer.new(remote, model_class, options)
     synchronizer.perform
