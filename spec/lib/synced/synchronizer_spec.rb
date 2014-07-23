@@ -2,9 +2,7 @@ require "spec_helper"
 
 describe Synced::Synchronizer do
   let(:account) { Account.create(name: "test") }
-  let(:remote_objects) {
-    [remote_object(id: 42, name: "Remote")]
-  }
+  let(:remote_objects) { [remote_object(id: 42, name: "Remote")] }
 
   describe "#perform with remote objects given" do
     context "and they are missing in the local db" do
@@ -49,9 +47,7 @@ describe Synced::Synchronizer do
       end
 
       context "and it's not outdated" do
-        let(:remote_objects) { [
-          remote_object(id: 42, name: "Old Remote")
-        ] }
+        let(:remote_objects) { [remote_object(id: 42, name: "Old Remote")] }
 
         it "doesn't update the local object" do
           expect_any_instance_of(Rental).to receive(:save!).never
@@ -82,9 +78,7 @@ describe Synced::Synchronizer do
         let(:location) { Location.create(name: "Bahamas") }
         let!(:photo) { Photo.create(synced_id: 12) }
         let!(:photo_to_cancel) { location.photos.create(synced_id: 1) }
-        let(:remote_photos) { [
-          remote_object(id: 19, filename: 'a.jpg')
-        ] }
+        let(:remote_photos) { [remote_object(id: 19, filename: 'a.jpg')] }
 
         it "cancels local objects" do
           expect {
