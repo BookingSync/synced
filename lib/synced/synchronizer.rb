@@ -42,7 +42,7 @@ module Synced
       @remove            = options[:remove]
       @only_updated      = options[:only_updated]
       @include           = options[:include]
-      @local_attributes  = Array(options[:local_attributes])
+      @local_attributes  = options[:local_attributes]
       @associations      = Array(options[:associations])
       @remote_objects    = Array(remote_objects) if remote_objects
       @request_performed = false
@@ -75,7 +75,11 @@ module Synced
     private
 
     def local_attributes_mapping(remote)
-      Hash[@local_attributes.map { |k| [k, remote[k]] }]
+      if @local_attributes.is_a?(Hash)
+        Hash[@local_attributes.map { |k, v| [k, remote[v]] }]
+      else
+        Hash[Array(@local_attributes).map { |k| [k, remote[k]] }]
+      end
     end
 
     def default_attributes_mapping(remote)

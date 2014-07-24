@@ -178,6 +178,14 @@ describe Synced::Synchronizer do
         expect(Amenity.last.name).to eq "wow"
       end
     end
+
+    context "passed as a hash" do
+      let(:remote_objects) { [remote_object(id: 12, short_name: "foo short name")] }
+      it "assigns values from remote to local model's attributes" do
+        Booking.synchronize(remote: remote_objects)
+        expect(Booking.last.name).to eq("foo short name")
+      end
+    end
   end
 
   context "#perform on model with associations" do
@@ -326,11 +334,11 @@ describe Synced::Synchronizer do
     end
 
     context "and with only updated strategy" do
-      let(:remote_objects) {[
+      let(:remote_objects) { [
         remote_object(id: 1, name: "test1"),
         remote_object(id: 3, name: "test3"),
         remote_object(id: 20, name: "test20")
-      ]}
+      ] }
       let!(:booking) { account.bookings.create(name: "test2",
         synced_id: 2, synced_all_at: "2010-01-01 12:12:12") }
       let!(:second_booking) { account.bookings.create(name: "test2",
