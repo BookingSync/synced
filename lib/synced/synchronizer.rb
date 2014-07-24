@@ -127,7 +127,7 @@ class Synced::Synchronizer
   end
 
   def fetch_remote_objects
-    api.get(resource_name, api_request_options).tap do
+    api.paginate(resource_name, api_request_options).tap do
       @request_performed = true
     end
   end
