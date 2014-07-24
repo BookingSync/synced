@@ -336,9 +336,8 @@ describe Synced::Synchronizer do
       let!(:second_booking) { account.bookings.create(name: "test2",
         synced_id: 200, synced_all_at: "2014-12-12 12:12:12") }
       before do
-        allow(account.api).to receive(:paginate).and_return(remote_objects)
-        allow(account.api).to receive(:last_response)
-          .and_return(Hashie::Mash.new(meta: {deleted_ids: [2, 17]}))
+        allow_any_instance_of(BookingSync::API::Client).to receive(:paginate)
+          .and_call_original
       end
 
       it "makes request to the api with oldest synced_all_at" do
@@ -350,18 +349,22 @@ describe Synced::Synchronizer do
 
       context "when remove: true" do
         it "destroys local object by ids from response's meta" do
-          expect {
-            Booking.synchronize(scope: account, remove: true)
-          }.to change { Booking.where(synced_id: 2).count }.from(1).to(0)
+          VCR.use_cassette("deleted_ids_meta") do
+            expect {
+              Booking.synchronize(scope: account, remove: true)
+            }.to change { Booking.where(synced_id: 2).count }.from(1).to(0)
+          end
         end
       end
 
       it "updates synced_all_at for all local object within current scope" do
-        expect {
+        VCR.use_cassette("deleted_ids_meta") do
           expect {
-            Booking.synchronize(scope: account)
-          }.to change { Booking.find_by(synced_id: 200).synced_all_at }
-        }.to change { Booking.find_by(synced_id: 2).synced_all_at }
+            expect {
+              Booking.synchronize(scope: account)
+            }.to change { Booking.find_by(synced_id: 200).synced_all_at }
+          }.to change { Booking.find_by(synced_id: 2).synced_all_at }
+        end
       end
     end
 

@@ -1,4 +1,5 @@
 require 'timecop'
+require 'vcr'
 # Configure Rails Environment
 ENV["RAILS_ENV"] = "test"
 
@@ -9,6 +10,11 @@ Rails.backtrace_cleaner.remove_silencers!
 
 # Load support files
 Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each { |f| require f }
+
+VCR.configure do |c|
+  c.cassette_library_dir = 'spec/vcr_cassettes'
+  c.hook_into :webmock # or :fakeweb
+end
 
 RSpec.configure do |config|
   config.mock_with :rspec

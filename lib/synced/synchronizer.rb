@@ -123,6 +123,7 @@ class Synced::Synchronizer
   end
 
   def deleted_remote_objects_ids
+    remote_objects unless @request_performed
     api.last_response.meta[:deleted_ids]
   end
 
