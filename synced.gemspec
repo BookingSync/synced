@@ -7,7 +7,7 @@ require "synced/version"
 Gem::Specification.new do |s|
   s.name        = "synced"
   s.version     = Synced::VERSION
-  s.authors     = ["Sebastien Grosjean"]
+  s.authors     = ["Sebastien Grosjean", "Mariusz Pietrzyk"]
   s.email       = ["dev@bookingsync.com"]
   s.homepage    = "https://github.com/BookingSync/synced"
   s.summary     = "Keep your BookingSync Application synced with BookingSync."
