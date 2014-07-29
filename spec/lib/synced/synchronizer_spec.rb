@@ -292,6 +292,14 @@ describe Synced::Synchronizer do
     describe "#api" do
       let(:api) { double() }
 
+      context "when client given by api: option" do
+        it "uses it" do
+          expect(api).to receive(:paginate).with("photos",
+            { auto_paginate: true }).and_return([])
+          Photo.synchronize(api: api)
+        end
+      end
+
       context "when scope responds to api method" do
         it "uses api client from scope" do
           location = Location.create

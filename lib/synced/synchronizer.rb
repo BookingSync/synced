@@ -30,6 +30,8 @@ module Synced
     #   if it's missing, all will be destroyed with destroy_all.
     #   You can also force method to remove local objects by passing it
     #   to remove: :mark_as_missing.
+    # @param api [BookingSync::API::Client] - API client to be used for fetching
+    #   remote objects
     # @option options [Boolean] only_updated: If true requests to API will take
     #   advantage of updated_since param and fetch only created/changed/deleted
     #   remote objects
@@ -43,6 +45,7 @@ module Synced
       @only_updated      = options[:only_updated]
       @include           = options[:include]
       @local_attributes  = options[:local_attributes]
+      @api               = options[:api]
       @associations      = Array(options[:associations])
       @remote_objects    = Array(remote_objects) if remote_objects
       @request_performed = false
@@ -105,6 +108,7 @@ module Synced
     # @raise [BookingSync::API::Unauthorized] - On unauthorized user
     # @return [BookingSync::API::Client] BookingSync API client
     def api
+      return @api if @api
       closest = [@scope, @scope.class, @model_class].detect do |o|
                   o.respond_to?(:api)
                 end

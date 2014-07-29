@@ -47,6 +47,8 @@ module Synced
     #   if it's missing, all will be destroyed with destroy_all.
     #   You can also force method to remove local objects by passing it
     #   to remove: :mark_as_missing.
+    # @param api [BookingSync::API::Client] - API client to be used for fetching
+    #   remote objects
     # @example Synchronizing amenities
     #
     #   Amenity.synchronize(remote: [remote_amenity1, remote_amenity2])
@@ -58,7 +60,7 @@ module Synced
     #  Rental.synchronize(remote: remote_rentals, scope: website)
     #
     def synchronize(remote: nil, model_class: self, scope: nil, remove: false,
-      include: nil)
+      include: nil, api: api)
       options = {
         scope: scope,
         id_key: synced_id_key,
@@ -68,7 +70,8 @@ module Synced
         local_attributes: synced_local_attributes,
         associations: synced_associations,
         only_updated: synced_only_updated,
-        include: include
+        include: include,
+        api: api
       }
       synchronizer = Synced::Synchronizer.new(remote, model_class, options)
       synchronizer.perform
