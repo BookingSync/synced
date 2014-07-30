@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    synced (0.0.6)
+    synced (0.0.7)
       bookingsync-api (>= 0.0.17)
       hashie
       rails (>= 4.0.0)
