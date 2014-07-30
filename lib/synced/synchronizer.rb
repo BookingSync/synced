@@ -79,7 +79,11 @@ module Synced
 
     def local_attributes_mapping(remote)
       if @local_attributes.is_a?(Hash)
-        Hash[@local_attributes.map { |k, v| [k, remote[v]] }]
+        Hash[
+          @local_attributes.map do |k, v|
+            [k, v.respond_to?(:call) ? v.call(remote) : remote[v]]
+          end
+        ]
       else
         Hash[Array(@local_attributes).map { |k| [k, remote[k]] }]
       end

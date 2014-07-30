@@ -180,10 +180,21 @@ describe Synced::Synchronizer do
     end
 
     context "passed as a hash" do
-      let(:remote_objects) { [remote_object(id: 12, short_name: "foo short name")] }
+      let(:remote_objects) {
+        [remote_object(id: 12, short_name: "foo short name",
+          reviews: [remote_object(id: 1), remote_object(id: 2)])]
+      }
+
       it "assigns values from remote to local model's attributes" do
         Booking.synchronize(remote: remote_objects)
-        expect(Booking.last.name).to eq("foo short name")
+        expect(Booking.last.name).to eq "foo short name"
+      end
+
+      context "and remote attribute as a lamba" do
+        it "assigns result of the block to local model's attribute" do
+          Booking.synchronize(remote: remote_objects)
+          expect(Booking.last.reviews_count).to eq 2
+        end
       end
     end
   end
