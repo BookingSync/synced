@@ -60,7 +60,7 @@ module Synced
     #  Rental.synchronize(remote: remote_rentals, scope: website)
     #
     def synchronize(remote: nil, model_class: self, scope: nil, remove: false,
-      include: nil, api: api)
+      include: nil, api: nil)
       options = {
         scope: scope,
         id_key: synced_id_key,
