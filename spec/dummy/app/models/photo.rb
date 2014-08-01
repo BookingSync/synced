@@ -1,5 +1,5 @@
 class Photo < ActiveRecord::Base
-  synced data_key: nil, synced_all_at_key: nil, local_attributes: :filename
+  synced local_attributes: :filename
   belongs_to :location
 
   def self.cancel_all

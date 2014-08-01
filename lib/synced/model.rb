@@ -23,8 +23,9 @@ module Synced
         :synced_local_attributes, :synced_associations, :synced_only_updated
       self.synced_id_key           = options.fetch(:id_key, :synced_id)
       self.synced_all_at_key       = options.fetch(:synced_all_at_key,
-        :synced_all_at)
-      self.synced_data_key         = options.fetch(:data_key, :synced_data)
+        synced_column_presence(:synced_all_at))
+      self.synced_data_key         = options.fetch(:data_key,
+        synced_column_presence(:synced_data))
       self.synced_local_attributes = options.fetch(:local_attributes, [])
       self.synced_associations     = options.fetch(:associations, [])
       self.synced_only_updated     = options.fetch(:only_updated, false)
@@ -75,6 +76,12 @@ module Synced
       }
       synchronizer = Synced::Synchronizer.new(remote, model_class, options)
       synchronizer.perform
+    end
+
+    private
+
+    def synced_column_presence(name)
+      name if column_names.include?(name.to_s)
     end
   end
 end

@@ -234,7 +234,7 @@ describe Synced::Synchronizer do
     end
   end
 
-  describe "#perform on model with disabled synced_data and synced_all_at" do
+  describe "#perform on model without synced_data and synced_all_at columns" do
     it "synchronizes remote objects correctly" do
       expect {
         Photo.synchronize(remote: [remote_object(id: 17)])
