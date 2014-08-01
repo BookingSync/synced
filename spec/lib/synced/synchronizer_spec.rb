@@ -177,6 +177,16 @@ describe Synced::Synchronizer do
           updated_at: Time.now)])
         expect(Amenity.last.name).to eq "wow"
       end
+
+      context "with mapper module" do
+        it "uses methods from mapper" do
+          Client.synchronize(remote:
+            [remote_object(id: 12, name: "Megan Fox")])
+          client = Client.last
+          expect(client.first_name).to eq "Megan"
+          expect(client.last_name).to eq "Fox"
+        end
+      end
     end
 
     context "passed as a hash" do

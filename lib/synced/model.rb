@@ -20,7 +20,8 @@ module Synced
     #   object which will be mapped to local object attributes.
     def synced(options = {})
       class_attribute :synced_id_key, :synced_all_at_key, :synced_data_key,
-        :synced_local_attributes, :synced_associations, :synced_only_updated
+        :synced_local_attributes, :synced_associations, :synced_only_updated,
+        :synced_mapper_module
       self.synced_id_key           = options.fetch(:id_key, :synced_id)
       self.synced_all_at_key       = options.fetch(:synced_all_at_key,
         synced_column_presence(:synced_all_at))
@@ -29,6 +30,7 @@ module Synced
       self.synced_local_attributes = options.fetch(:local_attributes, [])
       self.synced_associations     = options.fetch(:associations, [])
       self.synced_only_updated     = options.fetch(:only_updated, false)
+      self.synced_mapper_module    = options.fetch(:mapper, nil)
       include Synced::HasSyncedData
     end
 
@@ -72,7 +74,8 @@ module Synced
         associations: synced_associations,
         only_updated: synced_only_updated,
         include: include,
-        api: api
+        api: api,
+        mapper: synced_mapper_module
       }
       synchronizer = Synced::Synchronizer.new(remote, model_class, options)
       synchronizer.perform
