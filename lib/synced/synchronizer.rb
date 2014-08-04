@@ -35,6 +35,8 @@ module Synced
     # @option options [Boolean] only_updated: If true requests to API will take
     #   advantage of updated_since param and fetch only created/changed/deleted
     #   remote objects
+    # @option options [Module] mapper: Module class which will be used for
+    #   mapping remote objects attributes into local object attributes
     def initialize(remote_objects, model_class, options = {})
       @model_class       = model_class
       @scope             = options[:scope]
@@ -46,6 +48,7 @@ module Synced
       @include           = options[:include]
       @local_attributes  = options[:local_attributes]
       @api               = options[:api]
+      @mapper            = options[:mapper]
       @associations      = Array(options[:associations])
       @remote_objects    = Array(remote_objects) if remote_objects
       @request_performed = false
@@ -56,6 +59,7 @@ module Synced
         remove_relation.send(remove_strategy) if @remove
 
         remote_objects.map do |remote|
+          remote.extend(@mapper) if @mapper
           local_object = local_object_by_remote_id(remote.id) || relation_scope.new
           local_object.attributes = default_attributes_mapping(remote)
           local_object.attributes = local_attributes_mapping(remote)
@@ -81,11 +85,11 @@ module Synced
       if @local_attributes.is_a?(Hash)
         Hash[
           @local_attributes.map do |k, v|
-            [k, v.respond_to?(:call) ? v.call(remote) : remote[v]]
+            [k, v.respond_to?(:call) ? v.call(remote) : remote.send(v)]
           end
         ]
       else
-        Hash[Array(@local_attributes).map { |k| [k, remote[k]] }]
+        Hash[Array(@local_attributes).map { |k| [k, remote.send(k)] }]
       end
     end
 

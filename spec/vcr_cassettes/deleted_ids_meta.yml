@@ -58,6 +58,6 @@ http_interactions:
       - close
     body:
       encoding: UTF-8
-      string: "{\"bookings\":[{\"id\":1,\"account_id\":1,\"rental_id\":2,\"start_at\":\"2014-04-28T10:55:13Z\",\"end_at\":\"2014-12-28T10:55:34Z\"},{\"id\":4,\"account_id\":1,\"rental_id\":2,\"start_at\":\"2014-04-28T10:55:13Z\",\"end_at\":\"2014-12-28T10:55:34Z\"}],\"meta\":{\"deleted_ids\":[2,17]}}"
+      string: "{\"bookings\":[{\"short_name\":\"one\",\"id\":1,\"account_id\":1,\"rental_id\":2,\"start_at\":\"2014-04-28T10:55:13Z\",\"end_at\":\"2014-12-28T10:55:34Z\"},{\"short_name\":\"one\",\"id\":4,\"account_id\":1,\"rental_id\":2,\"start_at\":\"2014-04-28T10:55:13Z\",\"end_at\":\"2014-12-28T10:55:34Z\"}],\"meta\":{\"deleted_ids\":[2,17]}}"
     http_version:
   recorded_at: Fri, 21 Mar 2014 13:46:19 GMT
