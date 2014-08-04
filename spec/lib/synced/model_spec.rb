@@ -2,6 +2,9 @@ require "spec_helper"
 
 describe Synced::Model do
   class DummyModel < ActiveRecord::Base
+    def self.column_names
+      %w(synced_id synced_all_at synced_data)
+    end
     synced associations: %i(comments votes)
   end
 
@@ -35,21 +38,21 @@ describe Synced::Model do
     end
 
     it "allows to set custom synced_id_key" do
-      klass = Class.new(ActiveRecord::Base) do
+      klass = dummy_model do
         synced id_key: :remote_id
       end
       expect(klass.synced_id_key).to eq :remote_id
     end
 
     it "allows to set custom synced_all_at_key" do
-      klass = Class.new(ActiveRecord::Base) do
+      klass = dummy_model do
         synced synced_all_at_key: :remote_updated_at
       end
       expect(klass.synced_all_at_key).to eq :remote_updated_at
     end
 
     it "allows to set custom synced_data_key" do
-      klass = Class.new(ActiveRecord::Base) do
+      klass = dummy_model do
         synced data_key: :remote_data
       end
       expect(klass.synced_data_key).to eq :remote_data
@@ -67,5 +70,14 @@ describe Synced::Model do
       Rental.synchronize(remote: [remote_object(id: 12,
         updated_at: 2.days.ago)])
     }.to change { Rental.count }.by(1)
+  end
+
+  def dummy_model(&block)
+    klass = Class.new(ActiveRecord::Base) do
+      def self.column_names
+        %w(synced_id synced_data synced_all_at)
+      end
+    end
+    klass.instance_eval &block
   end
 end
