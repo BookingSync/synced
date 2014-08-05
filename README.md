@@ -168,6 +168,39 @@ class Rental < ActiveRecord::Base
 end
 ```
 
+### Globalized attributes
+
+Some of the API endpoints return strings in multiple languages.
+When your app is also multilingual you might want take advantage of it
+and import translations straight to model translations.
+
+In order to import translations use `:globalized_attributes` attribute. It
+assumes that your app is using Globalize 3 or newer and `:headline` is already
+a translated attribute.
+
+```ruby
+class Rental < ActiveRecord::Base
+  synced globalized_attributes: :headline
+  translates :headline
+end
+```
+
+Now headline will be saved for all translations provided by the API.
+If given translation will be removed on the API side, it will set to nil
+locally.
+
+If you want to map remote field to a different local attribute,
+specify mapping as a Hash instead of an Array.
+
+```ruby
+class Rental < ActiveRecord::Base
+  synced globalized_attributes: {headline: :description}
+  translates :headline
+end
+```
+
+This will map remote `:description` to local `:headline` attribute.
+
 ## Partial updates (using updated since parameter)
 
 Partial updates mean that first synchronization will copy all of the remote

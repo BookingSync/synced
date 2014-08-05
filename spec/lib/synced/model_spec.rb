@@ -96,7 +96,7 @@ describe Synced::Model do
           dummy_model { synced i_have_no_memory_of_this_place: true }
         }.to raise_error { |error|
           expect(error.message).to eq "Unknown key: :i_have_no_memory_of_this_place. " \
-            + "Valid keys are: :associations, :data_key, :fields, :id_key, " \
+            + "Valid keys are: :associations, :data_key, :fields, :globalized_attributes, :id_key, " \
             + ":include, :local_attributes, :mapper, :only_updated, :remove, " \
             + ":synced_all_at_key"
         }

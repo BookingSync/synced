@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20140805125135) do
+ActiveRecord::Schema.define(version: 20140805131720) do
 
   create_table "accounts", force: true do |t|
     t.string   "name"
@@ -46,6 +46,17 @@ ActiveRecord::Schema.define(version: 20140805125135) do
     t.datetime "created_at"
     t.datetime "updated_at"
   end
+
+  create_table "location_translations", force: true do |t|
+    t.integer  "location_id", null: false
+    t.string   "locale",      null: false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.string   "name"
+  end
+
+  add_index "location_translations", ["locale"], name: "index_location_translations_on_locale"
+  add_index "location_translations", ["location_id"], name: "index_location_translations_on_location_id"
 
   create_table "locations", force: true do |t|
     t.string   "name"

@@ -16,7 +16,7 @@ module Synced
     #   remote objects
     # @option options [Symbol] data_key: attribute name under which remote
     #   object's data is stored.
-    # @option options [Array] local_attributes: Array of attributes in the remote
+    # @option options [Array|Hash] local_attributes: Array of attributes in the remote
     #   object which will be mapped to local object attributes.
     # @option options [Boolean|Symbol] remove: If it's true all local objects
     #   within current scope which are not present in the remote array will be
@@ -27,27 +27,32 @@ module Synced
     #   if it's missing, all will be destroyed with destroy_all.
     #   You can also force method to remove local objects by passing it
     #   to remove: :mark_as_missing.
+    # @option options [Array|Hash] globalized_attributes: A list of attributes
+    #   which will be mapped with their translations.
     def synced(options = {})
       options.symbolize_keys!
-      options.assert_valid_keys(:associations, :data_key, :fields, :id_key,
-        :include, :local_attributes, :mapper, :only_updated, :remove,
-        :synced_all_at_key)
+      options.assert_valid_keys(:associations, :data_key, :fields,
+        :globalized_attributes, :id_key, :include, :local_attributes, :mapper,
+        :only_updated, :remove, :synced_all_at_key)
       class_attribute :synced_id_key, :synced_all_at_key, :synced_data_key,
         :synced_local_attributes, :synced_associations, :synced_only_updated,
-        :synced_mapper, :synced_remove, :synced_include, :synced_fields
-      self.synced_id_key           = options.fetch(:id_key, :synced_id)
-      self.synced_all_at_key       = options.fetch(:synced_all_at_key,
+        :synced_mapper, :synced_remove, :synced_include, :synced_fields,
+        :synced_globalized_attributes
+      self.synced_id_key                = options.fetch(:id_key, :synced_id)
+      self.synced_all_at_key            = options.fetch(:synced_all_at_key,
         synced_column_presence(:synced_all_at))
-      self.synced_data_key         = options.fetch(:data_key,
+      self.synced_data_key              = options.fetch(:data_key,
         synced_column_presence(:synced_data))
-      self.synced_local_attributes = options.fetch(:local_attributes, [])
-      self.synced_associations     = options.fetch(:associations, [])
-      self.synced_only_updated     = options.fetch(:only_updated,
+      self.synced_local_attributes      = options.fetch(:local_attributes, [])
+      self.synced_associations          = options.fetch(:associations, [])
+      self.synced_only_updated          = options.fetch(:only_updated,
         column_names.include?(synced_all_at_key.to_s))
-      self.synced_mapper           = options.fetch(:mapper, nil)
-      self.synced_remove           = options.fetch(:remove, false)
-      self.synced_include          = options.fetch(:include, [])
-      self.synced_fields           = options.fetch(:fields, [])
+      self.synced_mapper                = options.fetch(:mapper, nil)
+      self.synced_remove                = options.fetch(:remove, false)
+      self.synced_include               = options.fetch(:include, [])
+      self.synced_fields                = options.fetch(:fields, [])
+      self.synced_globalized_attributes = options.fetch(:globalized_attributes,
+        [])
       include Synced::HasSyncedData
     end
 
@@ -88,14 +93,15 @@ module Synced
       options[:include] = Array(synced_include) unless options.has_key?(:include)
       options[:fields]  = Array(synced_fields) unless options.has_key?(:fields)
       options.merge!({
-        id_key:            synced_id_key,
-        synced_data_key:   synced_data_key,
-        synced_all_at_key: synced_all_at_key,
-        data_key:          synced_data_key,
-        local_attributes:  synced_local_attributes,
-        associations:      synced_associations,
-        only_updated:      synced_only_updated,
-        mapper:            synced_mapper
+        id_key:                synced_id_key,
+        synced_data_key:       synced_data_key,
+        synced_all_at_key:     synced_all_at_key,
+        data_key:              synced_data_key,
+        local_attributes:      synced_local_attributes,
+        associations:          synced_associations,
+        only_updated:          synced_only_updated,
+        mapper:                synced_mapper,
+        globalized_attributes: synced_globalized_attributes
       })
       Synced::Synchronizer.new(self, options).perform
     end

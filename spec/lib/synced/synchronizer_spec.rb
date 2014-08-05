@@ -222,6 +222,41 @@ describe Synced::Synchronizer do
     end
   end
 
+  context "#perform on model with globalized_attributes" do
+    let(:remote_objects) { [
+      remote_object(id: 12, name: { en: "English name", fr: "French name",
+        pl: "Polish name" }, photos: [])
+    ] }
+
+    it "creates translations" do
+      expect {
+        Location.synchronize(remote: remote_objects)
+      }.to change { Location::Translation.count }.from(0).to(3)
+      location = Location.last
+      I18n.with_locale('pl') { expect(location.name).to eq "Polish name" }
+      I18n.with_locale('en') { expect(location.name).to eq "English name" }
+      I18n.with_locale('fr') { expect(location.name).to eq "French name" }
+    end
+
+    context "when a translation is missing in the remote object" do
+      let!(:location) do
+        Location.create(synced_id: 12, name_translations: {
+          en: "English name", fr: "French name", pl: "Polish name" })
+      end
+      let(:remote_objects) { [
+        remote_object(id: 12, name: { en: "English name" }, photos: [])
+      ] }
+
+      it "sets them to nil locally" do
+        Location.synchronize(remote: remote_objects)
+        location = Location.last
+        expect(location.translations.find_by_locale('en').name).to eq "English name"
+        expect(location.translations.find_by_locale('pl').name).to eq nil
+        expect(location.translations.find_by_locale('fr').name).to eq nil
+      end
+    end
+  end
+
   context "#perform on model with associations" do
     let(:locations) { [
       remote_object(id: 13,
