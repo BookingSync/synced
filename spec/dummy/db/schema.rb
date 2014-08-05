@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20140801153935) do
+ActiveRecord::Schema.define(version: 20140805125135) do
 
   create_table "accounts", force: true do |t|
     t.string   "name"
@@ -50,7 +50,6 @@ ActiveRecord::Schema.define(version: 20140801153935) do
   create_table "locations", force: true do |t|
     t.string   "name"
     t.integer  "synced_id"
-    t.datetime "synced_all_at"
     t.text     "synced_data"
     t.datetime "created_at"
     t.datetime "updated_at"
@@ -71,7 +70,6 @@ ActiveRecord::Schema.define(version: 20140801153935) do
     t.datetime "updated_at"
     t.integer  "synced_id"
     t.text     "synced_data"
-    t.datetime "synced_all_at"
     t.integer  "account_id"
   end
 

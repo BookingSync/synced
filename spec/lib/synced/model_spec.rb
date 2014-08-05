@@ -63,6 +63,26 @@ describe Synced::Model do
         expect(Photo.new).not_to respond_to(:synced_data)
       end
     end
+
+    context "when .synced_all_at_key column is present" do
+      context "and only_updated is missing" do
+        it "enables only_updated strategy" do
+          klass = dummy_model(:synced_all_at) do
+            synced
+          end
+          expect(klass.synced_only_updated).to be true
+        end
+      end
+
+      context "and only_updated is set to false" do
+        it "disables only_updated strategy" do
+          klass = dummy_model(:synced_all_at) do
+            synced only_updated: false
+          end
+          expect(klass.synced_only_updated).to be false
+        end
+      end
+    end
   end
 
   it "synchronizes model" do
@@ -72,10 +92,11 @@ describe Synced::Model do
     }.to change { Rental.count }.by(1)
   end
 
-  def dummy_model(&block)
+  def dummy_model(dummy_columns = nil, &block)
+    @dummy_columns = dummy_columns
     klass = Class.new(ActiveRecord::Base) do
       def self.column_names
-        %w(synced_id synced_data synced_all_at)
+        @dummy_columns || %w(synced_id synced_data synced_all_at)
       end
     end
     klass.instance_eval &block

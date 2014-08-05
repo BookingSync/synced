@@ -18,19 +18,12 @@ describe Synced::Synchronizer do
         rentals = synchronize
         expect(rentals.size).to eq 1
       end
-
-      it "doesn't set synced_all_at" do
-        synchronize
-        rental = Rental.find_by(synced_id: 42)
-        expect(rental.synced_all_at).to be_nil
-      end
     end
 
     context "and they are present in the local db" do
       let(:synchronize) { Rental.synchronize(remote: remote_objects) }
       let!(:rental) { account.rentals.create(synced_data: { id: 42,
-        name: "Old Remote" }, synced_id: 42,
-        synced_all_at: "2014-01-17 11:11:11 UTC") }
+        name: "Old Remote" }, synced_id: 42) }
 
       it "doesn't create another local object" do
         expect { synchronize }.not_to change { Rental.count }
@@ -53,12 +46,6 @@ describe Synced::Synchronizer do
           expect_any_instance_of(Rental).to receive(:save!).never
           synchronize
         end
-      end
-
-      it "doesn't change synced_all_at" do
-        expect {
-          synchronize
-        }.not_to change { Rental.find_by(synced_id: 42).synced_all_at }
       end
     end
 
