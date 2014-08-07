@@ -29,7 +29,8 @@ module Synced
         synced_column_presence(:synced_data))
       self.synced_local_attributes = options.fetch(:local_attributes, [])
       self.synced_associations     = options.fetch(:associations, [])
-      self.synced_only_updated     = options.fetch(:only_updated, false)
+      self.synced_only_updated     = options.fetch(:only_updated,
+        column_names.include?(synced_all_at_key.to_s))
       self.synced_mapper_module    = options.fetch(:mapper, nil)
       include Synced::HasSyncedData
     end
