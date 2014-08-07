@@ -13,8 +13,7 @@ implement it yourself using
 
 ## Requirements
 
-This engine requires BookingSync API `>= 0.0.17`, Rails `>= 4.0.0` and
-Ruby `>= 2.0.0`.
+This engine requires Rails `>= 4.0.0` and Ruby `>= 2.0.0`.
 
 ## Documentation
 
