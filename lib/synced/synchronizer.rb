@@ -124,7 +124,7 @@ module Synced
     end
 
     def local_object_by_remote_id(remote_id)
-      local_objects.find { |l| l.attributes[id_key.to_s] == remote_id }
+      local_objects.find { |l| l.public_send(id_key) == remote_id }
     end
 
     def local_objects
