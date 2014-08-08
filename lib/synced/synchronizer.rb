@@ -55,25 +55,32 @@ module Synced
     end
 
     def perform
-      relation_scope.transaction do
-        remove_relation.send(remove_strategy) if @remove
-
-        remote_objects.map do |remote|
-          remote.extend(@mapper) if @mapper
-          local_object = local_object_by_remote_id(remote.id) || relation_scope.new
-          local_object.attributes = default_attributes_mapping(remote)
-          local_object.attributes = local_attributes_mapping(remote)
-          local_object.save! if local_object.changed?
-          local_object.tap do |local_object|
-            @associations.each do |association|
-              klass = association.to_s.classify.constantize
-              klass.synchronize(remote: remote[association], scope: local_object,
-                remove: @remove)
-            end
+      instrument("perform.synced", model: @model_class) do
+        relation_scope.transaction do
+          instrument("remove_perform.synced", model: @model_class) do
+            remove_relation.send(remove_strategy) if @remove
           end
-        end.tap do |local_objects|
-          if updated_since_enabled? && @request_performed
-            relation_scope.update_all(@synced_all_at_key => Time.now)
+          instrument("sync_perform.synced", model: @model_class) do
+            remote_objects.map do |remote|
+              remote.extend(@mapper) if @mapper
+              local_object = local_object_by_remote_id(remote.id) || relation_scope.new
+              local_object.attributes = default_attributes_mapping(remote)
+              local_object.attributes = local_attributes_mapping(remote)
+              local_object.save! if local_object.changed?
+              local_object.tap do |local_object|
+                @associations.each do |association|
+                  klass = association.to_s.classify.constantize
+                  klass.synchronize(remote: remote[association], scope: local_object,
+                    remove: @remove)
+                end
+              end
+            end
+          end.tap do |local_objects|
+            if updated_since_enabled? && @request_performed
+              instrument("update_synced_all_at_perform.synced", model: @model_class) do
+                relation_scope.update_all(@synced_all_at_key => Time.now)
+              end
+            end
           end
         end
       end
@@ -145,8 +152,10 @@ module Synced
     end
 
     def fetch_remote_objects
-      api.paginate(resource_name, api_request_options).tap do
-        @request_performed = true
+      instrument("fetch_remote_objects.synced", model: @model_class) do
+        api.paginate(resource_name, api_request_options).tap do
+          @request_performed = true
+        end
       end
     end
 
@@ -163,7 +172,9 @@ module Synced
     end
 
     def minimum_updated_at
-      relation_scope.minimum(@synced_all_at_key)
+      instrument("minimum_updated_at.synced") do
+        relation_scope.minimum(@synced_all_at_key)
+      end
     end
 
     def updated_since_enabled?
@@ -192,6 +203,10 @@ module Synced
       else
         relation_scope.where.not(id_key => remote_objects_ids)
       end
+    end
+
+    def instrument(*args, &block)
+      Synced.instrumenter.instrument(*args, &block)
     end
 
     class MissingAPIClient < StandardError
