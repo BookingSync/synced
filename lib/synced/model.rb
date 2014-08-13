@@ -43,7 +43,7 @@ module Synced
       self.synced_mapper_module    = options.fetch(:mapper, nil)
       self.synced_remove           = options.fetch(:remove, false)
       self.synced_include          = options.fetch(:include, [])
-      self.synced_fields           = options.fetch(:fields, nil)
+      self.synced_fields           = options.fetch(:fields, [])
       include Synced::HasSyncedData
     end
 
