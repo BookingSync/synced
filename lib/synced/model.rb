@@ -30,7 +30,7 @@ module Synced
     def synced(options = {})
       class_attribute :synced_id_key, :synced_all_at_key, :synced_data_key,
         :synced_local_attributes, :synced_associations, :synced_only_updated,
-        :synced_mapper_module, :synced_remove
+        :synced_mapper_module, :synced_remove, :synced_include
       self.synced_id_key           = options.fetch(:id_key, :synced_id)
       self.synced_all_at_key       = options.fetch(:synced_all_at_key,
         synced_column_presence(:synced_all_at))
@@ -42,6 +42,7 @@ module Synced
         column_names.include?(synced_all_at_key.to_s))
       self.synced_mapper_module    = options.fetch(:mapper, nil)
       self.synced_remove           = options.fetch(:remove, false)
+      self.synced_include          = options.fetch(:include, [])
       include Synced::HasSyncedData
     end
 
@@ -85,7 +86,7 @@ module Synced
         local_attributes:  synced_local_attributes,
         associations:      synced_associations,
         only_updated:      synced_only_updated,
-        include:           include,
+        include:           include.nil? ? Array(synced_include) : include,
         api:               api,
         mapper:            synced_mapper_module
       }
