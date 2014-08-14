@@ -295,7 +295,7 @@ describe Synced::Synchronizer do
 
       it "makes api request with include" do
         expect(Location.api).to receive(:paginate)
-          .with("locations", { include: [:photos], auto_paginate: true })
+          .with("locations", { include: [:photos, :addresses], auto_paginate: true })
           .and_return(remote_objects)
         Location.synchronize
       end
@@ -421,12 +421,45 @@ describe Synced::Synchronizer do
 
       context "and associations present" do
         let(:remote_objects) { [remote_object(id: 42, photos: [])] }
+
         it "adds include and associations to the API request" do
           expect(Location.api).to receive(:paginate)
             .with("locations", { auto_paginate: true,
               include: [:photos, :comments] })
             .and_return(remote_objects)
           Location.synchronize(include: [:comments])
+        end
+      end
+    end
+
+    context "when include: in model present" do
+      it "passes include to the API request" do
+        expect(Client.api).to receive(:paginate)
+          .with("clients", { auto_paginate: true,
+            include: [:addresses] })
+          .and_return(remote_objects)
+        Client.synchronize
+      end
+
+      context "and associations present" do
+        let(:remote_objects) { [remote_object(id: 1, photos: [])] }
+
+        it "adds include from model and associations to the API request" do
+          expect(Location.api).to receive(:paginate)
+            .with("locations", { auto_paginate: true,
+              include: [:photos, :addresses] })
+            .and_return(remote_objects)
+          Location.synchronize
+        end
+      end
+
+      context "and include in the synchronize method" do
+        it "overwrites include from the model" do
+          expect(Client.api).to receive(:paginate)
+          .with("clients", { auto_paginate: true,
+            include: [:photos] })
+          .and_return(remote_objects)
+          Client.synchronize(include: [:photos])
         end
       end
     end
