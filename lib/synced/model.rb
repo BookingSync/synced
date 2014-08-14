@@ -18,10 +18,19 @@ module Synced
     #   object's data is stored.
     # @option options [Array] local_attributes: Array of attributes in the remote
     #   object which will be mapped to local object attributes.
+    # @option options [Boolean|Symbol] remove: If it's true all local objects
+    #   within current scope which are not present in the remote array will be
+    #   destroyed.
+    #   If only_updated is enabled, ids of objects to be deleted will be taken
+    #   from the meta part. By default if cancel_at column is present, all
+    #   missing local objects will be canceled with cancel_all,
+    #   if it's missing, all will be destroyed with destroy_all.
+    #   You can also force method to remove local objects by passing it
+    #   to remove: :mark_as_missing.
     def synced(options = {})
       class_attribute :synced_id_key, :synced_all_at_key, :synced_data_key,
         :synced_local_attributes, :synced_associations, :synced_only_updated,
-        :synced_mapper_module
+        :synced_mapper_module, :synced_remove
       self.synced_id_key           = options.fetch(:id_key, :synced_id)
       self.synced_all_at_key       = options.fetch(:synced_all_at_key,
         synced_column_presence(:synced_all_at))
@@ -32,6 +41,7 @@ module Synced
       self.synced_only_updated     = options.fetch(:only_updated,
         column_names.include?(synced_all_at_key.to_s))
       self.synced_mapper_module    = options.fetch(:mapper, nil)
+      self.synced_remove           = options.fetch(:remove, false)
       include Synced::HasSyncedData
     end
 
@@ -50,7 +60,8 @@ module Synced
     #   missing local objects will be canceled with cancel_all,
     #   if it's missing, all will be destroyed with destroy_all.
     #   You can also force method to remove local objects by passing it
-    #   to remove: :mark_as_missing.
+    #   to remove: :mark_as_missing. This option can be defined in the model
+    #   and then overwritten in the synchronize method.
     # @param api [BookingSync::API::Client] - API client to be used for fetching
     #   remote objects
     # @example Synchronizing amenities
@@ -63,20 +74,20 @@ module Synced
     #
     #  Rental.synchronize(remote: remote_rentals, scope: website)
     #
-    def synchronize(remote: nil, model_class: self, scope: nil, remove: false,
+    def synchronize(remote: nil, model_class: self, scope: nil, remove: nil,
       include: nil, api: nil)
       options = {
-        scope: scope,
-        id_key: synced_id_key,
+        scope:             scope,
+        id_key:            synced_id_key,
         synced_all_at_key: synced_all_at_key,
-        data_key: synced_data_key,
-        remove: remove,
-        local_attributes: synced_local_attributes,
-        associations: synced_associations,
-        only_updated: synced_only_updated,
-        include: include,
-        api: api,
-        mapper: synced_mapper_module
+        data_key:          synced_data_key,
+        remove:            remove.nil? ? synced_remove : remove,
+        local_attributes:  synced_local_attributes,
+        associations:      synced_associations,
+        only_updated:      synced_only_updated,
+        include:           include,
+        api:               api,
+        mapper:            synced_mapper_module
       }
       synchronizer = Synced::Synchronizer.new(remote, model_class, options)
       synchronizer.perform

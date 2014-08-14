@@ -1,5 +1,5 @@
 class Location < ActiveRecord::Base
-  synced associations: :photos
+  synced associations: :photos, remove: true
   has_many :photos
 
   def self.api

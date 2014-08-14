@@ -50,6 +50,7 @@ module Synced
       @api               = options[:api]
       @mapper            = options[:mapper].respond_to?(:call) ?
                              options[:mapper].call : options[:mapper]
+      @remove            = options[:remove]
       @associations      = Array(options[:associations])
       @remote_objects    = Array(remote_objects) if remote_objects
       @request_performed = false

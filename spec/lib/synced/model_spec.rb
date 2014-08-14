@@ -5,7 +5,7 @@ describe Synced::Model do
     def self.column_names
       %w(synced_id synced_all_at synced_data)
     end
-    synced associations: %i(comments votes)
+    synced associations: %i(comments votes), remove: true
   end
 
   describe ".synced_id_key" do
@@ -29,6 +29,12 @@ describe Synced::Model do
   describe ".synced_associations" do
     it "returns association(s) for which synced is enabled" do
       expect(DummyModel.synced_associations).to eq %i(comments votes)
+    end
+  end
+
+  describe ".synced_remove" do
+    it "returns remove setting from declared in the model" do
+      expect(DummyModel.synced_remove).to be_truthy
     end
   end
 
