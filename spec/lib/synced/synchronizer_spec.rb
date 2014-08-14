@@ -92,6 +92,24 @@ describe Synced::Synchronizer do
       end
     end
 
+    describe "remove: true defined in the model" do
+      let!(:location) { Location.create(name: "test") }
+
+      it "deletes local objects which are missing in the remote objects" do
+        expect {
+          Location.synchronize(remote: [])
+        }.to change { Location.count }.by(-1)
+      end
+
+      context "and overwritten in synchronize method to false" do
+        it "doesn't delete local objects which are missing in the remote objects" do
+          expect {
+            Location.synchronize(remote: [], remove: false)
+          }.to_not change { Location.count }
+        end
+      end
+    end
+
     describe "runs inside transaction" do
       let(:remote_objects) { [
         remote_object(id: 1, name: "test"),
