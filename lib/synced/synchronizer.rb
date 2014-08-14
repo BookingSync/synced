@@ -50,6 +50,7 @@ module Synced
       @api               = options[:api]
       @mapper            = options[:mapper].respond_to?(:call) ?
                              options[:mapper].call : options[:mapper]
+      @fields            = options[:fields]
       @remove            = options[:remove]
       @associations      = Array(options[:associations])
       @remote_objects    = Array(remote_objects) if remote_objects
@@ -168,6 +169,7 @@ module Synced
           options[:include] ||= []
           options[:include] += @include
         end
+        options[:fields] = @fields if @fields.present?
         options[:updated_since] = minimum_updated_at if updated_since_enabled?
         options[:auto_paginate] = true
       end

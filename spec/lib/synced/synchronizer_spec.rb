@@ -436,7 +436,7 @@ describe Synced::Synchronizer do
       it "passes include to the API request" do
         expect(Client.api).to receive(:paginate)
           .with("clients", { auto_paginate: true,
-            include: [:addresses] })
+            include: [:addresses], fields: [:name] })
           .and_return(remote_objects)
         Client.synchronize
       end
@@ -453,14 +453,34 @@ describe Synced::Synchronizer do
         end
       end
 
-      context "and include in the synchronize method" do
+      context "and include provided in the synchronize method" do
         it "overwrites include from the model" do
           expect(Client.api).to receive(:paginate)
           .with("clients", { auto_paginate: true,
-            include: [:photos] })
+            include: [:photos], fields: [:name] })
           .and_return(remote_objects)
           Client.synchronize(include: [:photos])
         end
+      end
+    end
+  end
+
+  context "when fields: provided in the model" do
+    it "adds fields to the API request" do
+      expect(Client.api).to receive(:paginate)
+        .with("clients", { auto_paginate: true,
+          include: [:addresses], fields: [:name] })
+        .and_return(remote_objects)
+      Client.synchronize
+    end
+
+    context "and fields provided in the synchronize method" do
+      it "overwrites include from the model" do
+        expect(Client.api).to receive(:paginate)
+          .with("clients", { auto_paginate: true,
+            include: [:addresses], fields: [:phone, :type] })
+          .and_return(remote_objects)
+        Client.synchronize(fields: [:phone, :type])
       end
     end
   end

@@ -30,7 +30,7 @@ module Synced
     def synced(options = {})
       class_attribute :synced_id_key, :synced_all_at_key, :synced_data_key,
         :synced_local_attributes, :synced_associations, :synced_only_updated,
-        :synced_mapper_module, :synced_remove, :synced_include
+        :synced_mapper_module, :synced_remove, :synced_include, :synced_fields
       self.synced_id_key           = options.fetch(:id_key, :synced_id)
       self.synced_all_at_key       = options.fetch(:synced_all_at_key,
         synced_column_presence(:synced_all_at))
@@ -43,6 +43,7 @@ module Synced
       self.synced_mapper_module    = options.fetch(:mapper, nil)
       self.synced_remove           = options.fetch(:remove, false)
       self.synced_include          = options.fetch(:include, [])
+      self.synced_fields           = options.fetch(:fields, nil)
       include Synced::HasSyncedData
     end
 
@@ -76,7 +77,7 @@ module Synced
     #  Rental.synchronize(remote: remote_rentals, scope: website)
     #
     def synchronize(remote: nil, model_class: self, scope: nil, remove: nil,
-      include: nil, api: nil)
+      include: nil, api: nil, fields: nil)
       options = {
         scope:             scope,
         id_key:            synced_id_key,
@@ -87,6 +88,7 @@ module Synced
         associations:      synced_associations,
         only_updated:      synced_only_updated,
         include:           include.nil? ? Array(synced_include) : include,
+        fields:            fields.nil? ? Array(synced_fields) : fields,
         api:               api,
         mapper:            synced_mapper_module
       }
