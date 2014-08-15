@@ -37,7 +37,7 @@ module Synced
     #   remote objects
     # @option options [Module] mapper: Module class which will be used for
     #   mapping remote objects attributes into local object attributes
-    def initialize(remote_objects, model_class, options = {})
+    def initialize(model_class, options = {})
       @model_class       = model_class
       @scope             = options[:scope]
       @id_key            = options[:id_key]
@@ -53,7 +53,7 @@ module Synced
       @fields            = options[:fields]
       @remove            = options[:remove]
       @associations      = Array(options[:associations])
-      @remote_objects    = Array(remote_objects) if remote_objects
+      @remote_objects    = Array(options[:remote]) if options.has_key?(:remote)
       @request_performed = false
     end
 

@@ -30,7 +30,7 @@ module Synced
     def synced(options = {})
       class_attribute :synced_id_key, :synced_all_at_key, :synced_data_key,
         :synced_local_attributes, :synced_associations, :synced_only_updated,
-        :synced_mapper_module, :synced_remove, :synced_include, :synced_fields
+        :synced_mapper, :synced_remove, :synced_include, :synced_fields
       self.synced_id_key           = options.fetch(:id_key, :synced_id)
       self.synced_all_at_key       = options.fetch(:synced_all_at_key,
         synced_column_presence(:synced_all_at))
@@ -40,7 +40,7 @@ module Synced
       self.synced_associations     = options.fetch(:associations, [])
       self.synced_only_updated     = options.fetch(:only_updated,
         column_names.include?(synced_all_at_key.to_s))
-      self.synced_mapper_module    = options.fetch(:mapper, nil)
+      self.synced_mapper           = options.fetch(:mapper, nil)
       self.synced_remove           = options.fetch(:remove, false)
       self.synced_include          = options.fetch(:include, [])
       self.synced_fields           = options.fetch(:fields, nil)
@@ -76,24 +76,22 @@ module Synced
     #
     #  Rental.synchronize(remote: remote_rentals, scope: website)
     #
-    def synchronize(remote: nil, model_class: self, scope: nil, remove: nil,
-      include: nil, api: nil, fields: nil)
-      options = {
-        scope:             scope,
+    def synchronize(options = {})
+      options.symbolize_keys!
+      options[:remove]  = synced_remove unless options.has_key?(:remove)
+      options[:include] = Array(synced_include) unless options.has_key?(:include)
+      options[:fields]  = Array(synced_fields) unless options.has_key?(:fields)
+      options.merge!({
         id_key:            synced_id_key,
+        synced_data_key:   synced_data_key,
         synced_all_at_key: synced_all_at_key,
         data_key:          synced_data_key,
-        remove:            remove.nil? ? synced_remove : remove,
         local_attributes:  synced_local_attributes,
         associations:      synced_associations,
         only_updated:      synced_only_updated,
-        include:           include.nil? ? Array(synced_include) : include,
-        fields:            fields.nil? ? Array(synced_fields) : fields,
-        api:               api,
-        mapper:            synced_mapper_module
-      }
-      synchronizer = Synced::Synchronizer.new(remote, model_class, options)
-      synchronizer.perform
+        mapper:            synced_mapper
+      })
+      Synced::Synchronizer.new(self, options).perform
     end
 
     private
