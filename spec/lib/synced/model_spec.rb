@@ -89,13 +89,39 @@ describe Synced::Model do
         end
       end
     end
+
+    context "on unknown option" do
+      it "raises unknown key exception" do
+        expect {
+          dummy_model { synced i_have_no_memory_of_this_place: true }
+        }.to raise_error { |error|
+          expect(error.message).to eq "Unknown key: :i_have_no_memory_of_this_place. " \
+            + "Valid keys are: :associations, :data_key, :fields, :id_key, " \
+            + ":include, :local_attributes, :mapper, :only_updated, :remove, " \
+            + ":synced_all_at_key"
+        }
+      end
+    end
   end
 
-  it "synchronizes model" do
-    expect {
-      Rental.synchronize(remote: [remote_object(id: 12,
-        updated_at: 2.days.ago)])
-    }.to change { Rental.count }.by(1)
+  describe "#synchronize" do
+    it "synchronizes model" do
+      expect {
+        Rental.synchronize(remote: [remote_object(id: 12,
+          updated_at: 2.days.ago)])
+      }.to change { Rental.count }.by(1)
+    end
+
+    context "on unknown option" do
+      it "raises unknown key exception" do
+        expect {
+          Rental.synchronize(i_have_no_memory_of_this_place: true)
+        }.to raise_error { |error|
+          expect(error.message).to eq "Unknown key: :i_have_no_memory_of_this_place. " \
+            + "Valid keys are: :api, :fields, :include, :remote, :remove, :scope"
+        }
+      end
+    end
   end
 
   def dummy_model(dummy_columns = nil, &block)
