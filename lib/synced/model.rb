@@ -28,6 +28,9 @@ module Synced
     #   You can also force method to remove local objects by passing it
     #   to remove: :mark_as_missing.
     def synced(options = {})
+      options.assert_valid_keys(:associations, :data_key, :fields, :id_key,
+        :include, :local_attributes, :mapper, :only_updated, :remove,
+        :synced_all_at_key)
       class_attribute :synced_id_key, :synced_all_at_key, :synced_data_key,
         :synced_local_attributes, :synced_associations, :synced_only_updated,
         :synced_mapper, :synced_remove, :synced_include, :synced_fields
@@ -77,6 +80,8 @@ module Synced
     #  Rental.synchronize(remote: remote_rentals, scope: website)
     #
     def synchronize(options = {})
+      options.assert_valid_keys(:api, :fields, :include, :remote, :remove,
+        :scope)
       options.symbolize_keys!
       options[:remove]  = synced_remove unless options.has_key?(:remove)
       options[:include] = Array(synced_include) unless options.has_key?(:include)
