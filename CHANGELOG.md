@@ -1,4 +1,4 @@
-## 1.0.0.rc2
+## 1.0.1
   * [improvement] Options keys can be given as strings
   * [bugfix] Fixed case when remote: options is nil, API request is then performed
 
