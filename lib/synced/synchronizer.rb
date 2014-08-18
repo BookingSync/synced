@@ -53,7 +53,7 @@ module Synced
       @fields            = options[:fields]
       @remove            = options[:remove]
       @associations      = Array(options[:associations])
-      @remote_objects    = Array(options[:remote]) if options.has_key?(:remote)
+      @remote_objects    = Array(options[:remote]) unless options[:remote].nil?
       @request_performed = false
     end
 

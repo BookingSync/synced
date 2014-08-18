@@ -126,6 +126,14 @@ describe Synced::Synchronizer do
     end
   end
 
+  describe "#perform with nil given as remote" do
+    it "performs request on its own" do
+      expect_any_instance_of(BookingSync::API::Client).to receive(:paginate)
+        .and_return([])
+      Location.synchronize(remote: nil)
+    end
+  end
+
   describe "#perform with custom attributes" do
     before(:all) do
       Timecop.freeze("2014-01-17 11:11:11 UTC") do
