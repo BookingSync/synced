@@ -102,6 +102,13 @@ describe Synced::Model do
         }
       end
     end
+
+    context "on options keys given with strings" do
+      it "defines synced statement properly" do
+        klass = dummy_model { synced "id_key" => "some_id" }
+        expect(klass.synced_id_key).to eq "some_id"
+      end
+    end
   end
 
   describe "#synchronize" do
@@ -120,6 +127,14 @@ describe Synced::Model do
           expect(error.message).to eq "Unknown key: :i_have_no_memory_of_this_place. " \
             + "Valid keys are: :api, :fields, :include, :remote, :remove, :scope"
         }
+      end
+    end
+
+    context "on options keys given with strings" do
+      it "synchronizes model" do
+        expect {
+          Rental.synchronize("remote" => [remote_object(id: 12)])
+        }.to change { Rental.count }.by(1)
       end
     end
   end
