@@ -139,6 +139,41 @@ describe Synced::Model do
     end
   end
 
+  describe ".reset_synced" do
+    let(:account) { Account.create }
+    let(:remote_bookings) { [remote_object(id: 12), remote_object(id: 15)] }
+    before do
+      allow(account.api).to receive(:paginate).with("bookings",
+        { updated_since: nil, auto_paginate: true })
+        .and_return(remote_bookings)
+      Booking.synchronize(scope: account)
+    end
+
+    it "resets synced_all_at column" do
+      expect {
+       Booking.reset_synced
+      }.to change { Booking.all.map(&:synced_all_at) }.to [nil, nil]
+    end
+
+    context "invoked on relation" do
+      it "resets synced_all_at within given relation" do
+        booking = Booking.create(synced_all_at: 2.days.ago)
+        expect {
+          expect {
+            account.bookings.reset_synced
+          }.to change { account.bookings.reload.map(&:synced_all_at) }.to [nil, nil]
+        }.not_to change { booking.reload.synced_all_at }
+      end
+    end
+
+    context "on model without synced_all_at column" do
+      it "doesn't try to update the column" do
+        expect(Location).to receive(:update_all).never
+        Location.reset_synced
+      end
+    end
+  end
+
   def dummy_model(dummy_columns = nil, &block)
     @dummy_columns = dummy_columns
     klass = Class.new(ActiveRecord::Base) do

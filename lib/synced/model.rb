@@ -100,6 +100,15 @@ module Synced
       Synced::Synchronizer.new(self, options).perform
     end
 
+    # Reset synced_all_at for given scope, this forces synced to sync
+    # all the records on the next sync. Useful for cases when you add
+    # a new column to be synced and you use updated since strategy for faster
+    # synchronization.
+    def reset_synced
+      return unless synced_only_updated
+      update_all(synced_all_at_key => nil)
+    end
+
     private
 
     def synced_column_presence(name)
