@@ -1,3 +1,7 @@
+## 1.0.2
+  * [feature] .reset_synced added, allows to force syncing all local objects on
+    the next synchronization. It simply nullifies synced_all_at column.
+
 ## 1.0.1
   * [improvement] Options keys can be given as strings
   * [bugfix] Fixed case when remote: options is nil, API request is then performed
