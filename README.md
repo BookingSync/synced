@@ -182,6 +182,24 @@ NOTE: In order it to work, given endpoint needs to support updated_since
 parameter. Check [API documentation](http://docs.api.bookingsync.com/reference/)
 for given endpoint.
 
+### Forcing local objects to be re-synced with the API
+
+When you add a new column or change something in the synced attributes and you
+are using partial updates, old local objects will not be re-synced with API
+automatically. You need to reset `synced_all_at` column in order to force
+re-syncing objects again on the next synchronization. In order to do that use
+`reset_synced` method.
+
+```ruby
+Rental.reset_synced
+```
+
+You can use this method on a relation as well.
+
+```ruby
+account.rentals.reset_synced
+```
+
 ## Disabling saving whole synced_data
 
 If you don't need whole remote object to be stored in local object skip
