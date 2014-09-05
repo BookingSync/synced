@@ -1,3 +1,6 @@
+## 1.0.3
+  * [feature] Add globalized_attributes for handling translated attributes
+    with Globalize
 ## 1.0.2
   * [feature] .reset_synced added, allows to force syncing all local objects on
     the next synchronization. It simply nullifies synced_all_at column.
