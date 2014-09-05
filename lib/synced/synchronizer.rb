@@ -37,24 +37,27 @@ module Synced
     #   remote objects
     # @option options [Module] mapper: Module class which will be used for
     #   mapping remote objects attributes into local object attributes
+    # @option options [Array|Hash] globalized_attributes: A list of attributes
+    #   which will be mapped with their translations.
     def initialize(model_class, options = {})
-      @model_class       = model_class
-      @scope             = options[:scope]
-      @id_key            = options[:id_key]
-      @synced_all_at_key = options[:synced_all_at_key]
-      @data_key          = options[:data_key]
-      @remove            = options[:remove]
-      @only_updated      = options[:only_updated]
-      @include           = options[:include]
-      @local_attributes  = options[:local_attributes]
-      @api               = options[:api]
-      @mapper            = options[:mapper].respond_to?(:call) ?
-                             options[:mapper].call : options[:mapper]
-      @fields            = options[:fields]
-      @remove            = options[:remove]
-      @associations      = Array(options[:associations])
-      @remote_objects    = Array(options[:remote]) unless options[:remote].nil?
-      @request_performed = false
+      @model_class           = model_class
+      @scope                 = options[:scope]
+      @id_key                = options[:id_key]
+      @synced_all_at_key     = options[:synced_all_at_key]
+      @data_key              = options[:data_key]
+      @remove                = options[:remove]
+      @only_updated          = options[:only_updated]
+      @include               = options[:include]
+      @local_attributes      = attributes_as_hash(options[:local_attributes])
+      @api                   = options[:api]
+      @mapper                = options[:mapper].respond_to?(:call) ?
+                               options[:mapper].call : options[:mapper]
+      @fields                = options[:fields]
+      @remove                = options[:remove]
+      @associations          = Array(options[:associations])
+      @remote_objects        = Array(options[:remote]) unless options[:remote].nil?
+      @request_performed     = false
+      @globalized_attributes = attributes_as_hash(options[:globalized_attributes])
     end
 
     def perform
@@ -69,6 +72,10 @@ module Synced
               local_object = local_object_by_remote_id(remote.id) || relation_scope.new
               local_object.attributes = default_attributes_mapping(remote)
               local_object.attributes = local_attributes_mapping(remote)
+              if @globalized_attributes.present?
+                local_object.attributes = globalized_attributes_mapping(remote,
+                  local_object.translations.translated_locales)
+              end
               local_object.save! if local_object.changed?
               local_object.tap do |local_object|
                 @associations.each do |association|
@@ -92,21 +99,25 @@ module Synced
     private
 
     def local_attributes_mapping(remote)
-      if @local_attributes.is_a?(Hash)
-        Hash[
-          @local_attributes.map do |k, v|
-            [k, v.respond_to?(:call) ? v.call(remote) : remote.send(v)]
-          end
-        ]
-      else
-        Hash[Array(@local_attributes).map { |k| [k, remote.send(k)] }]
-      end
+      Hash[@local_attributes.map do |k, v|
+        [k, v.respond_to?(:call) ? v.call(remote) : remote.send(v)]
+      end]
     end
 
     def default_attributes_mapping(remote)
       {}.tap do |attributes|
         attributes[@id_key] = remote.id
         attributes[@data_key] = remote if @data_key
+      end
+    end
+
+    def globalized_attributes_mapping(remote, used_locales)
+      empty = Hash[used_locales.map { |locale| [locale.to_s, nil] }]
+      {}.tap do |attributes|
+        @globalized_attributes.each do |local_attr, remote_attr|
+          translations = empty.merge(remote.send(remote_attr) || {})
+          attributes["#{local_attr}_translations"] = translations
+        end
       end
     end
 
@@ -211,6 +222,11 @@ module Synced
 
     def instrument(*args, &block)
       Synced.instrumenter.instrument(*args, &block)
+    end
+
+    def attributes_as_hash(attributes)
+      return attributes if attributes.is_a?(Hash)
+      Hash[Array(attributes).map { |name| [name, name] }]
     end
 
     class MissingAPIClient < StandardError
