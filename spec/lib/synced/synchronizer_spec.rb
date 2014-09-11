@@ -61,6 +61,17 @@ describe Synced::Synchronizer do
         }.to change { Rental.count }.by(-1)
       end
 
+      it "ignores the model default scope" do
+        Period.create(start_date: '2014-09-09', end_date: '2014-09-10')
+        Period.create(start_date: '2014-09-10', end_date: '2014-09-13')
+
+        Timecop.freeze("2014-09-12 11:11:11 UTC") do
+          expect {
+            Period.synchronize(remote: [], remove: true)
+          }.to change { Period.unscoped.count }.by(-2)
+        end
+      end
+
       context "when canceled_at column is present" do
         let(:location) { Location.create(name: "Bahamas") }
         let!(:photo) { Photo.create(synced_id: 12) }
@@ -180,6 +191,21 @@ describe Synced::Synchronizer do
       Rental.create
       rentals = Rental.synchronize(remote: remote_objects, scope: account)
       expect(rentals).to eq [Rental.find_by(synced_id: 42)]
+    end
+
+    it "ignores the model default scope" do
+      rental = Rental.create
+      rental.periods.create(start_date: '2014-09-09', end_date: '2014-09-10')
+      rental.periods.create(start_date: '2014-09-10', end_date: '2014-09-13')
+
+      remaining_period = Period.create(start_date: '2014-09-09', end_date: '2014-09-10')
+
+      Timecop.freeze("2014-09-12 11:11:11 UTC") do
+        expect {
+          Period.synchronize(remote: [], scope: rental, remove: true)
+        }.to change { Period.unscoped.count }.by(-2)
+        expect(Period.unscoped.all).to eq [remaining_period]
+      end
     end
   end
 
