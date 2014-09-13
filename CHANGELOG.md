@@ -1,3 +1,5 @@
+## 1.0.4
+  * [bugfix] Fixed synchronization with models using `default_scope`.
 ## 1.0.3
   * [feature] Add globalized_attributes for handling translated attributes
     with Globalize
@@ -7,7 +9,7 @@
 
 ## 1.0.1
   * [improvement] Options keys can be given as strings
-  * [bugfix] Fixed case when remote: options is nil, API request is then performed
+  * [bugfix] Fixed case when `remote:` options is nil, API request is then performed
 
 ## 1.0.0
 
