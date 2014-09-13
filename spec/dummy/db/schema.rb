@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20140805131720) do
+ActiveRecord::Schema.define(version: 20140911201203) do
 
   create_table "accounts", force: true do |t|
     t.string   "name"
@@ -23,9 +23,9 @@ ActiveRecord::Schema.define(version: 20140805131720) do
     t.string   "name"
     t.integer  "remote_id"
     t.datetime "remote_updated_at"
+    t.text     "remote_data"
     t.datetime "created_at"
     t.datetime "updated_at"
-    t.text     "remote_data"
   end
 
   create_table "bookings", force: true do |t|
@@ -66,6 +66,15 @@ ActiveRecord::Schema.define(version: 20140805131720) do
     t.datetime "updated_at"
   end
 
+  create_table "periods", force: true do |t|
+    t.string   "start_date"
+    t.string   "end_date"
+    t.integer  "rental_id"
+    t.integer  "synced_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
   create_table "photos", force: true do |t|
     t.string   "filename"
     t.integer  "synced_id"
@@ -85,12 +94,5 @@ ActiveRecord::Schema.define(version: 20140805131720) do
   end
 
   add_index "rentals", ["synced_id"], name: "index_rentals_on_synced_id"
-
-  create_table "synced_synchronizations", force: true do |t|
-    t.string   "model"
-    t.datetime "synchronized_at"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-  end
 
 end

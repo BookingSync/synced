@@ -129,7 +129,11 @@ module Synced
     #
     # @return [ActiveRecord::Relation|Class]
     def relation_scope
-      @scope ? @scope.send(resource_name) : @model_class
+      if @scope
+        @model_class.unscoped { @scope.send(resource_name).scope }
+      else
+        @model_class.unscoped
+      end
     end
 
     # Returns api client from the closest possible source.
