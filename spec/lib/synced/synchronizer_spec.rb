@@ -479,6 +479,33 @@ describe Synced::Synchronizer do
       end
     end
 
+    context "when initial_sync_since given" do
+      let(:rental) { Rental.create(name: "test") }
+      let(:api) { double }
+
+      context "and there are no objects with lower synced_all_at time" do
+        it "makes request to the API with initial_sync_since time" do
+          expect(rental.api).to receive(:paginate).with("periods", {
+            updated_since: Time.parse("2009-04-19 14:44:32"),
+            auto_paginate: true }).and_return([])
+          Period.synchronize(scope: rental)
+        end
+      end
+
+
+      context "and there are objects with lower synced_all_at time" do
+        let!(:period) { Period.create(rental: rental,
+          synced_all_at: Time.parse("2009-01-01 03:05:06")) }
+
+        it "makes request to the API with minimum synced_all_at time" do
+          expect(rental.api).to receive(:paginate).with("periods", {
+            updated_since: Time.parse("2009-01-01 03:05:06"),
+            auto_paginate: true }).and_return([])
+          Period.synchronize(scope: rental)
+        end
+      end
+    end
+
     context "when include: provided" do
       it "passes include to the API request" do
         expect(account.api).to receive(:paginate)

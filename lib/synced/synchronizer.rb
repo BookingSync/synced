@@ -39,6 +39,9 @@ module Synced
     #   mapping remote objects attributes into local object attributes
     # @option options [Array|Hash] globalized_attributes: A list of attributes
     #   which will be mapped with their translations.
+    # @option options [Time|Proc] initial_sync_since: A point in time from which
+    #   objects will be synchronized on first synchronization.
+    #   Works only for partial (updated_since param) synchronizations.
     def initialize(model_class, options = {})
       @model_class           = model_class
       @scope                 = options[:scope]
@@ -58,6 +61,7 @@ module Synced
       @remote_objects        = Array(options[:remote]) unless options[:remote].nil?
       @request_performed     = false
       @globalized_attributes = attributes_as_hash(options[:globalized_attributes])
+      @initial_sync_since    = options[:initial_sync_since]
     end
 
     def perform
@@ -185,14 +189,24 @@ module Synced
           options[:include] += @include
         end
         options[:fields] = @fields if @fields.present?
-        options[:updated_since] = minimum_updated_at if updated_since_enabled?
+        options[:updated_since] = updated_since if updated_since_enabled?
         options[:auto_paginate] = true
       end
     end
 
-    def minimum_updated_at
-      instrument("minimum_updated_at.synced") do
-        relation_scope.minimum(@synced_all_at_key)
+    def updated_since
+      instrument("updated_since.synced") do
+        [relation_scope.minimum(@synced_all_at_key),
+          initial_sync_since].compact.min
+      end
+    end
+
+    def initial_sync_since
+      if @initial_sync_since.respond_to?(:call)
+        @initial_sync_since.arity == 0 ? @initial_sync_since.call :
+          @initial_sync_since.call(@scope)
+      else
+        @initial_sync_since
       end
     end
 
@@ -217,7 +231,7 @@ module Synced
     end
 
     def remove_relation
-      if @only_updated
+      if @only_updated && @request_performed
         relation_scope.where(id_key => deleted_remote_objects_ids)
       else
         relation_scope.where.not(id_key => remote_objects_ids)
