@@ -217,7 +217,7 @@ module Synced
     end
 
     def remove_relation
-      if @only_updated
+      if @only_updated && @request_performed
         relation_scope.where(id_key => deleted_remote_objects_ids)
       else
         relation_scope.where.not(id_key => remote_objects_ids)

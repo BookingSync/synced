@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20140911201203) do
+ActiveRecord::Schema.define(version: 20141028121624) do
 
   create_table "accounts", force: true do |t|
     t.string   "name"
@@ -73,6 +73,7 @@ ActiveRecord::Schema.define(version: 20140911201203) do
     t.integer  "synced_id"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.datetime "synced_all_at"
   end
 
   create_table "photos", force: true do |t|
