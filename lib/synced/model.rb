@@ -29,15 +29,18 @@ module Synced
     #   to remove: :mark_as_missing.
     # @option options [Array|Hash] globalized_attributes: A list of attributes
     #   which will be mapped with their translations.
+    # @option options [Time|Proc] initial_sync_since: A point in time from which
+    #   objects will be synchronized on first synchronization.
+    #   Works only for partial (updated_since param) synchronizations.
     def synced(options = {})
       options.symbolize_keys!
       options.assert_valid_keys(:associations, :data_key, :fields,
-        :globalized_attributes, :id_key, :include, :local_attributes, :mapper,
-        :only_updated, :remove, :synced_all_at_key)
+        :globalized_attributes, :id_key, :include, :initial_sync_since,
+        :local_attributes, :mapper, :only_updated, :remove, :synced_all_at_key)
       class_attribute :synced_id_key, :synced_all_at_key, :synced_data_key,
         :synced_local_attributes, :synced_associations, :synced_only_updated,
         :synced_mapper, :synced_remove, :synced_include, :synced_fields,
-        :synced_globalized_attributes
+        :synced_globalized_attributes, :synced_initial_sync_since
       self.synced_id_key                = options.fetch(:id_key, :synced_id)
       self.synced_all_at_key            = options.fetch(:synced_all_at_key,
         synced_column_presence(:synced_all_at))
@@ -53,6 +56,8 @@ module Synced
       self.synced_fields                = options.fetch(:fields, [])
       self.synced_globalized_attributes = options.fetch(:globalized_attributes,
         [])
+      self.synced_initial_sync_since    = options.fetch(:initial_sync_since,
+        nil)
       include Synced::HasSyncedData
     end
 
@@ -101,7 +106,8 @@ module Synced
         associations:          synced_associations,
         only_updated:          synced_only_updated,
         mapper:                synced_mapper,
-        globalized_attributes: synced_globalized_attributes
+        globalized_attributes: synced_globalized_attributes,
+        initial_sync_since:    synced_initial_sync_since
       })
       Synced::Synchronizer.new(self, options).perform
     end

@@ -1,5 +1,6 @@
 class Period < ActiveRecord::Base
-  synced local_attributes: %w(start_date end_date)
+  synced local_attributes: %w(start_date end_date),
+    initial_sync_since: -> (scope) { scope.import_periods_since }
 
   belongs_to :rental
 
