@@ -197,7 +197,7 @@ module Synced
     def updated_since
       instrument("updated_since.synced") do
         [relation_scope.minimum(@synced_all_at_key),
-          initial_sync_since].compact.min
+          initial_sync_since].compact.max
       end
     end
 
