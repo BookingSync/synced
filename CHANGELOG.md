@@ -1,3 +1,7 @@
+## 1.0.5
+  * [feature] When using partial updates (updated_since param) it's now possible
+  to synchronize objects from given point in time by passing initial_sync_since
+  option as value or block.
 ## 1.0.4
   * [bugfix] Fixed synchronization with models using `default_scope`.
 ## 1.0.3
