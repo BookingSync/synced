@@ -1,3 +1,6 @@
+## 1.0.6
+  * [bugfix] Fix selecting data for updated_since when there are object in the
+    relation
 ## 1.0.5
   * [feature] When using partial updates (updated_since param) it's now possible
   to synchronize objects from given point in time by passing initial_sync_since
