@@ -356,6 +356,22 @@ describe Synced::Synchronizer do
       expect(rental.synced_data).to eq(remote_objects.first)
     end
 
+    context "for model with updated since strategy and remove: true" do
+      let(:remote_objects) { [remote_object(id: 12, name: "test-12")] }
+      let(:account) { Account.create }
+      let!(:booking) { account.bookings.create(synced_id: 10, name: "test-10") }
+
+      it "synchronizes given model" do
+        expect(account.api).to receive(:paginate).with("bookings",
+        { auto_paginate: true, updated_since: nil }).and_return(remote_objects)
+        expect(account.api).to receive(:last_response)
+          .and_return(double({ meta: { deleted_ids: [] } }))
+        expect {
+          Booking.synchronize(scope: account, remove: true)
+        }.to change { account.bookings.count }.by(1)
+      end
+    end
+
     context "with associations" do
       let(:remote_objects) { [
         remote_object(id: 12, photos: [

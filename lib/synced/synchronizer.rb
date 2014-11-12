@@ -58,8 +58,8 @@ module Synced
       @fields                = options[:fields]
       @remove                = options[:remove]
       @associations          = Array(options[:associations])
-      @remote_objects        = Array(options[:remote]) unless options[:remote].nil?
-      @request_performed     = false
+      @perform_request       = options[:remote].nil?
+      @remote_objects        = Array(options[:remote]) unless @perform_request
       @globalized_attributes = attributes_as_hash(options[:globalized_attributes])
       @initial_sync_since    = options[:initial_sync_since]
     end
@@ -90,7 +90,7 @@ module Synced
               end
             end
           end.tap do |local_objects|
-            if updated_since_enabled? && @request_performed
+            if updated_since_enabled?
               instrument("update_synced_all_at_perform.synced", model: @model_class) do
                 relation_scope.update_all(@synced_all_at_key => Time.now)
               end
@@ -165,19 +165,17 @@ module Synced
     end
 
     def remote_objects
-      @remote_objects ||= fetch_remote_objects
+      @remote_objects ||= @perform_request ? fetch_remote_objects : nil
     end
 
     def deleted_remote_objects_ids
-      remote_objects unless @request_performed
+      remote_objects
       api.last_response.meta[:deleted_ids]
     end
 
     def fetch_remote_objects
       instrument("fetch_remote_objects.synced", model: @model_class) do
-        api.paginate(resource_name, api_request_options).tap do
-          @request_performed = true
-        end
+        api.paginate(resource_name, api_request_options)
       end
     end
 
@@ -211,7 +209,7 @@ module Synced
     end
 
     def updated_since_enabled?
-      @only_updated && @synced_all_at_key
+      @only_updated && @synced_all_at_key && @perform_request
     end
 
     def resource_name
@@ -231,7 +229,7 @@ module Synced
     end
 
     def remove_relation
-      if @only_updated && @request_performed
+      if updated_since_enabled?
         relation_scope.where(id_key => deleted_remote_objects_ids)
       else
         relation_scope.where.not(id_key => remote_objects_ids)
