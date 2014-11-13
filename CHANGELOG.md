@@ -1,3 +1,6 @@
+## 1.0.7
+  * [bugfix] Fix bug when only_updated: true and remove: true used. It was causing all records to be removed and then synchronized again
+    on the next synchronization.
 ## 1.0.6
   * [bugfix] Fix selecting data for updated_since when there are object in the
     relation
