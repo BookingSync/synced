@@ -24,5 +24,5 @@ RSpec.configure do |config|
 end
 
 def remote_object(attributes = {})
-  Hashie::Mash.new(attributes)
+  BookingSync::API::Resource.new(nil, attributes)
 end
