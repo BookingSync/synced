@@ -128,7 +128,7 @@ will be assigned value of `size` attribute of the remote object.
 
 ### Local attributes with mapping blocks
 
-If you want to convert an attributes value during synchronization you can
+If you want to convert attribute's value during synchronization you can
 pass a block as value in the mapping hash. Block will receive remote object
 as the only argument.
 
@@ -358,6 +358,34 @@ This can be overwritten in synchronize method.
 Photo.synchronize(fields: [:name, :size])
 ```
 
+## Delegate attributes
+
+You can delegate attributes from your synced model to `synced_data` Hash for easier access to
+synchronized data.
+
+```ruby
+class Photo < ActiveRecord::Base
+  synced delegate_attributes: [:name]
+end
+```
+
+Now you can fetch photo name using:
+
+```ruby
+@photo.name #=> "Sunny morning"
+```
+
+If you want to access synced attribute with different name, you can pass a Hash:
+
+```ruby
+class Photo < ActiveRecord::Base
+  synced delegate_attributes: {title: :name}
+end
+
+keys are delegated attributes' names and values are keys on synced data Hash. This is a simpler
+version of `delegate :name, to: :synced_data` which works with Hash reserved attributes names, like
+`:zip`, `:map`.
+
 ## Synced configuration options
 
 Option name          | Default value    | Description                                                                       | synced | synchronize |
@@ -372,6 +400,7 @@ Option name          | Default value    | Description                           
 `:include`           | `[]`             | [An array of associations to be fetched](#including-associations-in-synced_data)  | YES    | YES         |
 `:fields`            | `[]`             | [An array of fields to be fetched](#selecting-fields-to-be-synchronized)          | YES    | YES         |
 `:remote`            | `nil`            | [Remote objects to be synchronized with local ones](#synchronization-of-given-remote-objects) | NO | YES |
+`:delegate_attributes`| `[]`            | [Define delegators to synced data Hash attributes](#delegate-attributes) | YES | NO |
 
 ## Documentation
 

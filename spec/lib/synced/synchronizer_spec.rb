@@ -611,6 +611,7 @@ describe Synced::Synchronizer do
   end
 
   describe "synced object" do
+    let(:remote_objects) { [remote_object(id: 42, total: 12345, zip: "12-123")] }
     before do
       Timecop.freeze("2013-01-01 15:03:01 UTC") do
         Rental.synchronize(remote: remote_objects)
@@ -624,6 +625,16 @@ describe Synced::Synchronizer do
 
     it "has synced_data to remote object" do
       expect(rental.synced_data).to eq remote_objects.first
+    end
+
+    describe "delegated attributes" do
+      it "returns value from the hash" do
+        expect(rental.total).to eq 12345
+      end
+
+      it "works with hash reserved names" do
+        expect(rental.zip).to eq "12-123"
+      end
     end
   end
 end
