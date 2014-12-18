@@ -32,15 +32,18 @@ module Synced
     # @option options [Time|Proc] initial_sync_since: A point in time from which
     #   objects will be synchronized on first synchronization.
     #   Works only for partial (updated_since param) synchronizations.
+    # @option options [Array|Hash] delegate_attributes: Given attributes will be defined
+    #   on synchronized object and delegated to synced_data Hash
     def synced(options = {})
       options.symbolize_keys!
       options.assert_valid_keys(:associations, :data_key, :fields,
         :globalized_attributes, :id_key, :include, :initial_sync_since,
-        :local_attributes, :mapper, :only_updated, :remove, :synced_all_at_key)
+        :local_attributes, :mapper, :only_updated, :remove, :synced_all_at_key,
+        :delegate_attributes)
       class_attribute :synced_id_key, :synced_all_at_key, :synced_data_key,
         :synced_local_attributes, :synced_associations, :synced_only_updated,
         :synced_mapper, :synced_remove, :synced_include, :synced_fields,
-        :synced_globalized_attributes, :synced_initial_sync_since
+        :synced_globalized_attributes, :synced_initial_sync_since, :synced_delegate_attributes
       self.synced_id_key                = options.fetch(:id_key, :synced_id)
       self.synced_all_at_key            = options.fetch(:synced_all_at_key,
         synced_column_presence(:synced_all_at))
@@ -58,6 +61,8 @@ module Synced
         [])
       self.synced_initial_sync_since    = options.fetch(:initial_sync_since,
         nil)
+      self.synced_delegate_attributes   = options.fetch(:delegate_attributes, [])
+      include Synced::DelegateAttributes
       include Synced::HasSyncedData
     end
 
@@ -128,3 +133,4 @@ module Synced
     end
   end
 end
+

@@ -1,7 +1,10 @@
+require 'synced/delegate_attributes'
+require 'synced/attributes_as_hash'
 # Synchronizer class which performs actual synchronization between
 # local database and given array of remote objects
 module Synced
   class Synchronizer
+    include AttributesAsHash
     attr_reader :id_key
 
     # Initializes a new Synchronizer
@@ -51,7 +54,7 @@ module Synced
       @remove                = options[:remove]
       @only_updated          = options[:only_updated]
       @include               = options[:include]
-      @local_attributes      = attributes_as_hash(options[:local_attributes])
+      @local_attributes      = synced_attributes_as_hash(options[:local_attributes])
       @api                   = options[:api]
       @mapper                = options[:mapper].respond_to?(:call) ?
                                options[:mapper].call : options[:mapper]
@@ -60,7 +63,7 @@ module Synced
       @associations          = Array(options[:associations])
       @perform_request       = options[:remote].nil?
       @remote_objects        = Array(options[:remote]) unless @perform_request
-      @globalized_attributes = attributes_as_hash(options[:globalized_attributes])
+      @globalized_attributes = synced_attributes_as_hash(options[:globalized_attributes])
       @initial_sync_since    = options[:initial_sync_since]
     end
 
@@ -238,11 +241,6 @@ module Synced
 
     def instrument(*args, &block)
       Synced.instrumenter.instrument(*args, &block)
-    end
-
-    def attributes_as_hash(attributes)
-      return attributes if attributes.is_a?(Hash)
-      Hash[Array(attributes).map { |name| [name, name] }]
     end
 
     class MissingAPIClient < StandardError

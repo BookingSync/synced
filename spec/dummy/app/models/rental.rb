@@ -1,5 +1,5 @@
 class Rental < ActiveRecord::Base
-  synced
+  synced delegate_attributes: [:total, :zip]
   belongs_to :account
   has_many :periods
 
