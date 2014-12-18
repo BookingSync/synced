@@ -1,3 +1,5 @@
+## 1.0.8
+  * [feature] Add delegate_attributes for easier access to data stored in `synced_data` column
 ## 1.0.7
   * [bugfix] Fix bug when only_updated: true and remove: true used. It was causing all records to be removed and then synchronized again
     on the next synchronization.
