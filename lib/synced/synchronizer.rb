@@ -251,8 +251,8 @@ module Synced
 
       def message
         if @scope
-          %Q{Missing BookingSync API client in #{@scope} object or
-  #{@scope.class} class}
+          %Q{Missing BookingSync API client in #{@scope} object or \
+#{@scope.class} class when synchronizing #{@model_class} model}
         else
           %Q{Missing BookingSync API client in #{@model_class} class}
         end

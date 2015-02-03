@@ -442,12 +442,26 @@ describe Synced::Synchronizer do
       end
 
       context "api client can't be found" do
-        it "raises an exception" do
+        it "raises Synced::Synchronizer::MissingAPIClient exception with message" do
           expect {
             Photo.synchronize
           }.to raise_error(Synced::Synchronizer::MissingAPIClient) { |ex|
             expect(ex.message).to eq "Missing BookingSync API client in Photo class"
           }
+        end
+
+        context "when synchronizing with scope" do
+          let(:location) { Location.create }
+          before { allow(Location).to receive(:api) }
+
+          it "raises Synced::Synchronizer::MissingAPIClient exception with message" do
+            expect {
+              Photo.synchronize(scope: location)
+            }.to raise_error(Synced::Synchronizer::MissingAPIClient) { |ex|
+              expect(ex.message).to eq %Q{Missing BookingSync API client in #{location} object or \
+Location class when synchronizing Photo model}
+            }
+          end
         end
       end
     end
