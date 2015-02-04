@@ -1,20 +1,26 @@
 ## 1.0.8
   * [feature] Add delegate_attributes for easier access to data stored in `synced_data` column
+
 ## 1.0.7
   * [bugfix] Fix bug when only_updated: true and remove: true used. It was causing all records to be removed and then synchronized again
     on the next synchronization.
+
 ## 1.0.6
   * [bugfix] Fix selecting data for updated_since when there are object in the
     relation
+
 ## 1.0.5
   * [feature] When using partial updates (updated_since param) it's now possible
   to synchronize objects from given point in time by passing initial_sync_since
   option as value or block.
+
 ## 1.0.4
   * [bugfix] Fixed synchronization with models using `default_scope`.
+
 ## 1.0.3
   * [feature] Add globalized_attributes for handling translated attributes
     with Globalize
+
 ## 1.0.2
   * [feature] .reset_synced added, allows to force syncing all local objects on
     the next synchronization. It simply nullifies synced_all_at column.
