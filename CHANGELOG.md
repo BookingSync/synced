@@ -1,3 +1,7 @@
+## 1.0.9
+  * [improvement] Better exception message on missing API client
+  * [improvement] Update bookingsync-api gem to 0.0.24
+
 ## 1.0.8
   * [feature] Add delegate_attributes for easier access to data stored in `synced_data` column
 
