@@ -172,8 +172,12 @@ module Synced
     end
 
     def deleted_remote_objects_ids
+      meta && meta[:deleted_ids] or raise CannotDeleteDueToNoDeletedIdsError.new(@model_class)
+    end
+
+    def meta
       remote_objects
-      api.last_response.meta[:deleted_ids]
+      @meta ||= api.last_response.meta
     end
 
     def fetch_remote_objects
@@ -256,6 +260,22 @@ module Synced
         else
           %Q{Missing BookingSync API client in #{@model_class} class}
         end
+      end
+    end
+
+    class CannotDeleteDueToNoDeletedIdsError < StandardError
+      def initialize(model_class)
+        @model_class = model_class
+      end
+
+      def message
+        "Cannot delete #{pluralized_model_class}. No deleted_ids were returned in API response."
+      end
+
+      private
+
+      def pluralized_model_class
+        @model_class.to_s.pluralize
       end
     end
   end
