@@ -1,17 +1,20 @@
 require 'synced/delegate_attributes'
 require 'synced/attributes_as_hash'
+require 'synced/strategies/full'
+require 'synced/strategies/check'
+require 'synced/strategies/updated_since'
+
 # Synchronizer class which performs actual synchronization between
 # local database and given array of remote objects
 module Synced
   class Synchronizer
-    include AttributesAsHash
-    attr_reader :id_key
+    attr_reader :strategy
 
     # Initializes a new Synchronizer
     #
     # @param remote_objects [Array|NilClass] Array of objects to be synchronized
     #   with local database. Objects need to respond to at least :id message.
-    #   If it's nil, then synchronizer will fetch the remote objects on it's own.
+    #   If it's nil, then synchronizer will fetch the remote objects on it's own from the API.
     # @param model_class [Class] ActiveRecord model class from which local objects
     #   will be created.
     # @param options [Hash]
@@ -42,241 +45,30 @@ module Synced
     #   mapping remote objects attributes into local object attributes
     # @option options [Array|Hash] globalized_attributes: A list of attributes
     #   which will be mapped with their translations.
-    # @option options [Time|Proc] initial_sync_since: A point in time from which
-    #   objects will be synchronized on first synchronization.
-    #   Works only for partial (updated_since param) synchronizations.
+    # @option options [Symbol] strategy: Strategy to be used for synchronization
+    #   process, possible values are :full, :updated_since, :check and nil. Default
+    #   is nil, so strategy will be chosen automatically.
     def initialize(model_class, options = {})
-      @model_class           = model_class
-      @scope                 = options[:scope]
-      @id_key                = options[:id_key]
-      @synced_all_at_key     = options[:synced_all_at_key]
-      @data_key              = options[:data_key]
-      @remove                = options[:remove]
-      @only_updated          = options[:only_updated]
-      @include               = options[:include]
-      @local_attributes      = synced_attributes_as_hash(options[:local_attributes])
-      @api                   = options[:api]
-      @mapper                = options[:mapper].respond_to?(:call) ?
-                               options[:mapper].call : options[:mapper]
-      @fields                = options[:fields]
-      @remove                = options[:remove]
-      @associations          = Array(options[:associations])
-      @perform_request       = options[:remote].nil?
-      @remote_objects        = Array(options[:remote]) unless @perform_request
-      @globalized_attributes = synced_attributes_as_hash(options[:globalized_attributes])
-      @initial_sync_since    = options[:initial_sync_since]
+      @model_class       = model_class
+      @synced_all_at_key = options[:synced_all_at_key]
+      @only_updated      = options[:only_updated]
+      @perform_request   = options[:remote].nil?
+      @strategy          = strategy_class(options[:strategy]).new(model_class, options)
     end
 
     def perform
-      instrument("perform.synced", model: @model_class) do
-        relation_scope.transaction do
-          instrument("remove_perform.synced", model: @model_class) do
-            remove_relation.send(remove_strategy) if @remove
-          end
-          instrument("sync_perform.synced", model: @model_class) do
-            remote_objects.map do |remote|
-              remote.extend(@mapper) if @mapper
-              local_object = local_object_by_remote_id(remote.id) || relation_scope.new
-              local_object.attributes = default_attributes_mapping(remote)
-              local_object.attributes = local_attributes_mapping(remote)
-              if @globalized_attributes.present?
-                local_object.attributes = globalized_attributes_mapping(remote,
-                  local_object.translations.translated_locales)
-              end
-              local_object.save! if local_object.changed?
-              local_object.tap do |local_object|
-                @associations.each do |association|
-                  klass = association.to_s.classify.constantize
-                  klass.synchronize(remote: remote[association], scope: local_object,
-                    remove: @remove)
-                end
-              end
-            end
-          end.tap do |local_objects|
-            if updated_since_enabled?
-              instrument("update_synced_all_at_perform.synced", model: @model_class) do
-                relation_scope.update_all(@synced_all_at_key => Time.now)
-              end
-            end
-          end
-        end
-      end
+      @strategy.perform
     end
 
     private
 
-    def local_attributes_mapping(remote)
-      Hash[@local_attributes.map do |k, v|
-        [k, v.respond_to?(:call) ? v.call(remote) : remote.send(v)]
-      end]
+    def strategy_class(name)
+      name ||= updated_since? ? :updated_since : :full
+      "Synced::Strategies::#{name.to_s.classify}".constantize
     end
 
-    def default_attributes_mapping(remote)
-      {}.tap do |attributes|
-        attributes[@id_key] = remote.id
-        attributes[@data_key] = remote if @data_key
-      end
-    end
-
-    def globalized_attributes_mapping(remote, used_locales)
-      empty = Hash[used_locales.map { |locale| [locale.to_s, nil] }]
-      {}.tap do |attributes|
-        @globalized_attributes.each do |local_attr, remote_attr|
-          translations = empty.merge(remote.send(remote_attr) || {})
-          attributes["#{local_attr}_translations"] = translations
-        end
-      end
-    end
-
-    # Returns relation within which local objects are created/edited and removed
-    # If no scope is provided, the relation_scope will be class on which
-    # .synchronize method is called.
-    # If scope is provided, like: account, then relation_scope will be a relation
-    # account.rentals (given we run .synchronize on Rental class)
-    #
-    # @return [ActiveRecord::Relation|Class]
-    def relation_scope
-      if @scope
-        @model_class.unscoped { @scope.send(resource_name).scope }
-      else
-        @model_class.unscoped
-      end
-    end
-
-    # Returns api client from the closest possible source.
-    #
-    # @raise [BookingSync::API::Unauthorized] - On unauthorized user
-    # @return [BookingSync::API::Client] BookingSync API client
-    def api
-      return @api if @api
-      closest = [@scope, @scope.class, @model_class].detect do |o|
-                  o.respond_to?(:api)
-                end
-      closest && closest.api || raise(MissingAPIClient.new(@scope, @model_class))
-    end
-
-    def local_object_by_remote_id(remote_id)
-      local_objects.find { |l| l.public_send(id_key) == remote_id }
-    end
-
-    def local_objects
-      @local_objects ||= relation_scope.where(id_key => remote_objects_ids).to_a
-    end
-
-    def remote_objects_ids
-      @remote_objects_ids ||= remote_objects.map(&:id)
-    end
-
-    def remote_objects
-      @remote_objects ||= @perform_request ? fetch_remote_objects : nil
-    end
-
-    def deleted_remote_objects_ids
-      meta && meta[:deleted_ids] or raise CannotDeleteDueToNoDeletedIdsError.new(@model_class)
-    end
-
-    def meta
-      remote_objects
-      @meta ||= api.last_response.meta
-    end
-
-    def fetch_remote_objects
-      instrument("fetch_remote_objects.synced", model: @model_class) do
-        api.paginate(resource_name, api_request_options)
-      end
-    end
-
-    def api_request_options
-      {}.tap do |options|
-        options[:include] = @associations if @associations.present?
-        if @include.present?
-          options[:include] ||= []
-          options[:include] += @include
-        end
-        options[:fields] = @fields if @fields.present?
-        options[:updated_since] = updated_since if updated_since_enabled?
-        options[:auto_paginate] = true
-      end
-    end
-
-    def updated_since
-      instrument("updated_since.synced") do
-        [relation_scope.minimum(@synced_all_at_key),
-          initial_sync_since].compact.max
-      end
-    end
-
-    def initial_sync_since
-      if @initial_sync_since.respond_to?(:call)
-        @initial_sync_since.arity == 0 ? @initial_sync_since.call :
-          @initial_sync_since.call(@scope)
-      else
-        @initial_sync_since
-      end
-    end
-
-    def updated_since_enabled?
+    def updated_since?
       @only_updated && @synced_all_at_key && @perform_request
-    end
-
-    def resource_name
-      @model_class.to_s.tableize
-    end
-
-    def remove_strategy
-      @remove == true ? default_remove_strategy : @remove
-    end
-
-    def default_remove_strategy
-      if @model_class.column_names.include?("canceled_at")
-        :cancel_all
-      else
-        :destroy_all
-      end
-    end
-
-    def remove_relation
-      if updated_since_enabled?
-        relation_scope.where(id_key => deleted_remote_objects_ids)
-      else
-        relation_scope.where.not(id_key => remote_objects_ids)
-      end
-    end
-
-    def instrument(*args, &block)
-      Synced.instrumenter.instrument(*args, &block)
-    end
-
-    class MissingAPIClient < StandardError
-      def initialize(scope, model_class)
-        @scope = scope
-        @model_class = model_class
-      end
-
-      def message
-        if @scope
-          %Q{Missing BookingSync API client in #{@scope} object or \
-#{@scope.class} class when synchronizing #{@model_class} model}
-        else
-          %Q{Missing BookingSync API client in #{@model_class} class}
-        end
-      end
-    end
-
-    class CannotDeleteDueToNoDeletedIdsError < StandardError
-      def initialize(model_class)
-        @model_class = model_class
-      end
-
-      def message
-        "Cannot delete #{pluralized_model_class}. No deleted_ids were returned in API response."
-      end
-
-      private
-
-      def pluralized_model_class
-        @model_class.to_s.pluralize
-      end
     end
   end
 end
