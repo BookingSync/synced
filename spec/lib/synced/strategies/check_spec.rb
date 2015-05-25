@@ -74,5 +74,32 @@ describe Synced::Strategies::Check do
         end
       end
     end
+
+    describe "#model_class" do
+      it "returns synced model class" do
+        result = Synced::Strategies::Check::Result.new(Rental)
+        expect(result.model_class).to eq Rental
+      end
+    end
+
+    describe "to_s" do
+      require "synced/result_presenter"
+      before { rental.destroy }
+
+      it "returns formatted result" do
+        result = Rental.synchronize(scope: account, strategy: :check)
+out = %Q{
+synced_class:     Rental
+options:          #{result.options}
+changed count:    0
+additional count: 0
+missing count:    1
+changed:          []
+additional:       []
+missing:          [#<Hashie::Mash id=42 name="apartment">]
+}
+        expect(result.to_s).to eq out
+      end
+    end
   end
 end

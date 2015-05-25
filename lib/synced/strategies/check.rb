@@ -7,7 +7,7 @@ module Synced
 
       def initialize(model_class, options = {})
         super
-        @result = Result.new
+        @result = Result.new(model_class, options)
       end
 
       # Makes a DRY run of full synchronization. It checks and collects objects which
@@ -39,9 +39,11 @@ module Synced
 
       # Represents result of synchronization integrity check
       class Result
-        attr_accessor :changed, :missing, :additional
+        attr_accessor :model_class, :options, :changed, :missing, :additional
 
-        def initialize
+        def initialize(model_class = nil, options = {})
+          @model_class = model_class
+          @options = options
           @changed, @missing, @additional = [], [], []
         end
 
