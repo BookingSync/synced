@@ -29,7 +29,9 @@ module Synced
               local_object.attributes = globalized_attributes_mapping(remote,
                 local_object.translations.translated_locales)
             end
-            result.changed << local_object.changes if local_object.changed?
+            if local_object.changed?
+              result.changed << [{ id: local_object.id }, local_object.changes]
+            end
           else
             result.missing << remote
           end
