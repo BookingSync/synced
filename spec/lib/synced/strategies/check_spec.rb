@@ -56,6 +56,21 @@ describe Synced::Strategies::Check do
     end
   end
 
+  context "when local object is canceled" do
+    let(:location) { Location.create }
+
+    before do
+      location.photos.create synced_id: 19, canceled_at: 2.days.ago
+      allow(Location.api).to receive(:paginate).with("photos", { auto_paginate: true })
+        .and_return([])
+    end
+
+    it "doesn't show as additional object" do
+      differences = Photo.synchronize(scope: location, strategy: :check)
+      expect(differences.additional).to eq []
+    end
+  end
+
   describe Synced::Strategies::Check::Result do
     describe "#passed?" do
       context "when local objects are in sync with remote ones" do

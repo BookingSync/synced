@@ -9,4 +9,6 @@ class Photo < ActiveRecord::Base
   def cancel
     update_attribute(:canceled_at, Time.now)
   end
+
+  scope :visible, -> { where(canceled_at: nil) }
 end
