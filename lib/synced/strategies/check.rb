@@ -39,6 +39,12 @@ module Synced
         result
       end
 
+      # If we check model which uses cancel instead of destroy, we skip canceled
+      # when searching for additional objects by searching in :visible scope
+      def relation_scope
+        default_remove_strategy == :cancel_all ? super.visible : super
+      end
+
       # Represents result of synchronization integrity check
       class Result
         attr_accessor :model_class, :options, :changed, :missing, :additional
