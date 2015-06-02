@@ -19,7 +19,7 @@ describe Synced::Strategies::UpdatedSince do
 
         it "raises CannotDeleteDueToNoDeletedIdsError" do
           expect {
-            Booking.synchronize(scope: account, remove: true)
+            Booking.synchronize(scope: account, remove: true, search_params: {})
           }.to raise_error(Synced::Strategies::UpdatedSince::CannotDeleteDueToNoDeletedIdsError) { |ex|
             msg = "Cannot delete Bookings. No deleted_ids were returned in API response."
             expect(ex.message).to eq msg
