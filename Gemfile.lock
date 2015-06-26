@@ -153,9 +153,13 @@ PLATFORMS
 DEPENDENCIES
   globalize (~> 4.0.2)
   guard-rspec
+  pry
   rspec-rails
   sqlite3
   synced!
   timecop
   vcr
   webmock
+
+BUNDLED WITH
+   1.10.4

@@ -26,6 +26,29 @@ describe Synced::Strategies::UpdatedSince do
           }
         end
       end
+
+      context "and credentials flow" do
+        let!(:booking) { Booking.create(synced_id: 2, synced_all_at: "2010-01-01 12:12:12") }
+
+        before do
+          expect_any_instance_of(BookingSync::API::Client).to receive(:paginate).and_call_original
+          expect_any_instance_of(BookingSync::API::Client).to receive(:last_response).and_call_original
+        end
+
+        it "looks for last_response within the same api instance" do
+          VCR.use_cassette("deleted_ids_meta") do
+            expect { Booking.synchronize(remove: true) }.not_to raise_error
+          end
+        end
+
+        it "deletes the booking" do
+          VCR.use_cassette("deleted_ids_meta") do
+            expect {
+              Booking.synchronize(remove: true)
+            }.to change { Booking.where(synced_id: 2).count }.from(1).to(0)
+          end
+        end
+      end
     end
 
     describe "#perform with remote objects given" do

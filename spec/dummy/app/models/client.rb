@@ -13,6 +13,6 @@ class Client < ActiveRecord::Base
     include: :addresses, fields: [:name]
 
   def self.api
-    @@api ||= BookingSync::API::Client.new("CREDENTIALS_FLOW_ACCESS_TOKEN")
+    BookingSync::API::Client.new("CREDENTIALS_FLOW_ACCESS_TOKEN")
   end
 end

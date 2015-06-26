@@ -4,6 +4,10 @@ class Booking < ActiveRecord::Base
     mapper: -> { EmptyOne }
   belongs_to :account
 
+  def self.api
+    BookingSync::API::Client.new("CREDENTIALS_FLOW_ACCESS_TOKEN")
+  end
+
   module EmptyOne
   end
 end

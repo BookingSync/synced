@@ -406,13 +406,16 @@ describe Synced::Strategies::Full do
       end
 
       context "with associations" do
+        let(:api) { double }
         let(:remote_objects) { [
           remote_object(id: 12, photos: [
             remote_object(id: 100, filename: 'b.jpg')])
         ] }
 
+
         it "makes api request with include" do
-          expect(Location.api).to receive(:paginate)
+          allow(Location).to receive(:api).and_return(api)
+          expect(api).to receive(:paginate)
             .with("locations", { include: [:photos, :addresses], auto_paginate: true })
             .and_return(remote_objects)
           Location.synchronize
@@ -434,7 +437,8 @@ describe Synced::Strategies::Full do
       end
 
       describe "#api" do
-        let(:api) { double() }
+        let(:api) { double }
+        let(:location_api) { double }
 
         context "when client given by api: option" do
           it "uses it" do
@@ -458,8 +462,9 @@ describe Synced::Strategies::Full do
 
         context "when scope doesn't respond to api but scope class does" do
           it "uses api client from scope class" do
+            allow(Location).to receive(:api).and_return(location_api)
             expect(api).not_to receive(:paginate)
-            expect(Location.api).to receive(:paginate).with("photos",
+            expect(location_api).to receive(:paginate).with("photos",
               { auto_paginate: true }).and_return([])
             Photo.synchronize(scope: Location.create)
           end
@@ -579,9 +584,11 @@ describe Synced::Strategies::Full do
 
         context "and associations present" do
           let(:remote_objects) { [remote_object(id: 42, photos: [])] }
+          let(:api) { double }
 
           it "adds include and associations to the API request" do
-            expect(Location.api).to receive(:paginate)
+            allow(Location).to receive(:api).and_return(api)
+            expect(api).to receive(:paginate)
               .with("locations", { auto_paginate: true,
                 include: [:photos, :comments] })
               .and_return(remote_objects)
@@ -591,8 +598,15 @@ describe Synced::Strategies::Full do
       end
 
       context "when include: in model present" do
+        let(:api) { double }
+
+        before do
+          allow(Client).to receive(:api).and_return(api)
+          allow(Location).to receive(:api).and_return(api)
+        end
+
         it "passes include to the API request" do
-          expect(Client.api).to receive(:paginate)
+          expect(api).to receive(:paginate)
             .with("clients", { auto_paginate: true,
               include: [:addresses], fields: [:name] })
             .and_return(remote_objects)
@@ -603,7 +617,7 @@ describe Synced::Strategies::Full do
           let(:remote_objects) { [remote_object(id: 1, photos: [])] }
 
           it "adds include from model and associations to the API request" do
-            expect(Location.api).to receive(:paginate)
+            expect(api).to receive(:paginate)
               .with("locations", { auto_paginate: true,
                 include: [:photos, :addresses] })
               .and_return(remote_objects)
@@ -613,7 +627,7 @@ describe Synced::Strategies::Full do
 
         context "and include provided in the synchronize method" do
           it "overwrites include from the model" do
-            expect(Client.api).to receive(:paginate)
+            expect(api).to receive(:paginate)
             .with("clients", { auto_paginate: true,
               include: [:photos], fields: [:name] })
             .and_return(remote_objects)
@@ -624,6 +638,10 @@ describe Synced::Strategies::Full do
     end
 
     context "with fields: option" do
+      let(:api) { double }
+
+      before { allow(Client).to receive(:api).and_return(api) }
+
       it "adds fields to the API request" do
         expect(Client.api).to receive(:paginate)
           .with("clients", { auto_paginate: true,
@@ -642,7 +660,5 @@ describe Synced::Strategies::Full do
         end
       end
     end
-
-
   end
 end

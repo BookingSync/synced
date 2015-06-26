@@ -58,10 +58,12 @@ describe Synced::Strategies::Check do
 
   context "when local object is canceled" do
     let(:location) { Location.create }
+    let(:api) { double }
 
     before do
+      allow(location).to receive(:api).and_return(api)
       location.photos.create synced_id: 19, canceled_at: 2.days.ago
-      allow(Location.api).to receive(:paginate).with("photos", { auto_paginate: true })
+      allow(api).to receive(:paginate).with("photos", { auto_paginate: true })
         .and_return([])
     end
 
