@@ -1,3 +1,7 @@
+  * [bugfix] Memoize api instance at strategy level to properly return last_response for meta
+  * [refactor] Remove dummy api class method memoization, as it is an unrealistic scenario
+  * [improvement] Add `pry` development_dependency
+
 ## 1.1.0
   * [feature] Add check strategy, which doesn't do any synchronization it simply compares objects from the API with the one in local database and returns a diff.
   * [refactor] Synchronization code has been split into 3 strategies.

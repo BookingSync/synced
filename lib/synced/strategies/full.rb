@@ -147,7 +147,7 @@ module Synced
         closest = [@scope, @scope.class, @model_class].find do |object|
                     object.respond_to?(:api)
                   end
-        closest.try(:api) || raise(MissingAPIClient.new(@scope, @model_class))
+        @api ||= closest.try(:api) || raise(MissingAPIClient.new(@scope, @model_class))
       end
 
       def local_object_by_remote_id(remote_id)

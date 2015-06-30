@@ -1,5 +1,6 @@
 require 'timecop'
 require 'vcr'
+require 'pry'
 # Configure Rails Environment
 ENV["RAILS_ENV"] = "test"
 
