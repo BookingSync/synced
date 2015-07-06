@@ -1,3 +1,5 @@
+## 1.1.1
+  * [feature] Allow to filter records with `search_params` when syncing
   * [bugfix] Memoize api instance at strategy level to properly return last_response for meta
   * [refactor] Remove dummy api class method memoization, as it is an unrealistic scenario
   * [improvement] Add `pry` development_dependency
