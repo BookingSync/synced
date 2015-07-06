@@ -98,7 +98,7 @@ describe Synced::Model do
           expect(error.message).to eq "Unknown key: :i_have_no_memory_of_this_place. " \
             + "Valid keys are: :associations, :data_key, :fields, :globalized_attributes, :id_key, " \
             + ":include, :initial_sync_since, :local_attributes, :mapper, :only_updated, :remove, " \
-            + ":synced_all_at_key, :delegate_attributes"
+            + ":synced_all_at_key, :delegate_attributes, :search_params"
         }
       end
     end
@@ -125,7 +125,7 @@ describe Synced::Model do
           Rental.synchronize(i_have_no_memory_of_this_place: true)
         }.to raise_error { |error|
           expect(error.message).to eq "Unknown key: :i_have_no_memory_of_this_place. " \
-            + "Valid keys are: :api, :fields, :include, :remote, :remove, :scope, :strategy"
+            + "Valid keys are: :api, :fields, :include, :remote, :remove, :scope, :strategy, :search_params"
         }
       end
     end
@@ -137,6 +137,35 @@ describe Synced::Model do
         }.to change { Rental.count }.by(1)
       end
     end
+
+    context "search_params" do
+      it "uses search_params from class-level declaration accepting lambdas with arity 1
+      (with argument being :scope) and passes value to api" do
+        account = Account.create(name: "test")
+        expect(account.api).to receive(:paginate)
+          .with("bookings", { auto_paginate: true, from: account.import_bookings_since, updated_since: nil })
+          .and_return([])
+        Booking.synchronize(scope: account)
+      end
+
+      it "overrides search_params from class-level declaration accepting lambdas with arity 0 and passes value to api" do
+        account = Account.create(name: "test")
+        from = Time.parse("2010-01-01 12:00:00")
+        expect(account.api).to receive(:paginate)
+          .with("bookings", { auto_paginate: true, from: from, updated_since: nil })
+          .and_return([])
+        Booking.synchronize(scope: account, search_params: { from: -> { from } })
+      end
+
+      it "overrides search_params from class-level declaration accepting raw values and passes value to api" do
+        account = Account.create(name: "test")
+        from = Time.parse("2010-01-01 12:00:00")
+        expect(account.api).to receive(:paginate)
+          .with("bookings", { auto_paginate: true, from: from, updated_since: nil })
+          .and_return([])
+        Booking.synchronize(scope: account, search_params: { from: from })
+      end
+    end
   end
 
   describe ".reset_synced" do
@@ -146,7 +175,7 @@ describe Synced::Model do
       allow(account.api).to receive(:paginate).with("bookings",
         { updated_since: nil, auto_paginate: true })
         .and_return(remote_bookings)
-      Booking.synchronize(scope: account)
+      Booking.synchronize(scope: account, search_params: {})
     end
 
     it "resets synced_all_at column" do
