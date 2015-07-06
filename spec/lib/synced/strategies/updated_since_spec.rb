@@ -37,14 +37,14 @@ describe Synced::Strategies::UpdatedSince do
 
         it "looks for last_response within the same api instance" do
           VCR.use_cassette("deleted_ids_meta") do
-            expect { Booking.synchronize(remove: true) }.not_to raise_error
+            expect { Booking.synchronize(remove: true, search_params: {}) }.not_to raise_error
           end
         end
 
         it "deletes the booking" do
           VCR.use_cassette("deleted_ids_meta") do
             expect {
-              Booking.synchronize(remove: true)
+              Booking.synchronize(remove: true, search_params: {})
             }.to change { Booking.where(synced_id: 2).count }.from(1).to(0)
           end
         end
