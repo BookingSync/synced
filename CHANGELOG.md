@@ -1,3 +1,5 @@
+  * [feature] Allow to scope synchronize per rental
+
 ## 1.1.1
   * [feature] Allow to filter records with `search_params` when syncing
   * [bugfix] Memoize api instance at strategy level to properly return last_response for meta

@@ -182,7 +182,7 @@ module Synced
           end
           options[:fields] = @fields if @fields.present?
           options[:auto_paginate] = true
-        end.merge(search_params)
+        end.merge(search_params).merge(scope_params)
       end
 
       def search_params
@@ -190,6 +190,15 @@ module Synced
           final_value = value.respond_to?(:call) ? search_param_value_for_lambda(value) : value
           [param, final_value]
         end]
+      end
+
+      def scope_params
+        case @scope
+        when Rental
+          { rental_id: @scope.synced_id }
+        else
+          {}
+        end
       end
 
       def search_param_value_for_lambda(func)
