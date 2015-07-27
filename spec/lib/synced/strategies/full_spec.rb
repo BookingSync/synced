@@ -555,14 +555,14 @@ describe Synced::Strategies::Full do
       end
 
       context "when initial_sync_since given" do
-        let(:rental) { Rental.create(name: "test") }
+        let(:rental) { Rental.create(name: "test", synced_id: 7) }
         let(:api) { double }
 
         context "and there are no objects with higher synced_all_at time" do
           it "makes request to the API with initial_sync_since time" do
             expect(rental.api).to receive(:paginate).with("periods", {
               updated_since: Time.parse("2009-04-19 14:44:32"),
-              auto_paginate: true }).and_return([])
+              auto_paginate: true, rental_id: 7 }).and_return([])
             Period.synchronize(scope: rental)
           end
         end
@@ -575,7 +575,7 @@ describe Synced::Strategies::Full do
           it "makes request to the API with minimum synced_all_at time" do
             expect(rental.api).to receive(:paginate).with("periods", {
               updated_since: Time.parse("2014-01-01 03:05:06"),
-              auto_paginate: true }).and_return([])
+              auto_paginate: true, rental_id: 7 }).and_return([])
             Period.synchronize(scope: rental)
           end
         end
@@ -666,6 +666,22 @@ describe Synced::Strategies::Full do
             .and_return(remote_objects)
           Client.synchronize(fields: [:phone, :type])
         end
+      end
+    end
+
+    context "scoped to rental" do
+      let(:rental) { Rental.create(name: "test", synced_id: 7) }
+      let(:api) { double }
+
+      before { allow(rental.api).to receive(:api).and_return(api) }
+
+      it "adds rental_id to api call" do
+        expect(rental.api).to receive(:paginate)
+          .with("periods", { auto_paginate: true,
+            updated_since: Time.parse("2009-04-19 14:44:32"),
+            rental_id: 7 })
+          .and_return(remote_objects)
+        Period.synchronize(scope: rental)
       end
     end
   end
