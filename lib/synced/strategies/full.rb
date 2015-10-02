@@ -59,9 +59,9 @@ module Synced
                                    options[:mapper].call : options[:mapper]
         @fields                = options[:fields]
         @remove                = options[:remove]
-        @associations          = Array(options[:associations])
+        @associations          = Array.wrap(options[:associations])
         @perform_request       = options[:remote].nil?
-        @remote_objects        = Array(options[:remote]) unless @perform_request
+        @remote_objects        = Array.wrap(options[:remote]) unless @perform_request
         @globalized_attributes = synced_attributes_as_hash(options[:globalized_attributes])
         @search_params         = options[:search_params]
       end
