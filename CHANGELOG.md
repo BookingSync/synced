@@ -1,3 +1,6 @@
+## master
+  * [bugfix] Fix remote_objects array wrapping to allow single remote_object sync to local association
+
 ## 1.1.1
   * [feature] Allow to filter records with `search_params` when syncing
   * [bugfix] Memoize api instance at strategy level to properly return last_response for meta

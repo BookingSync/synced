@@ -5,7 +5,7 @@ module Synced
     # Used for mapping local - remote attributes
     def synced_attributes_as_hash(attributes)
       return attributes if attributes.is_a?(Hash)
-      Hash[Array(attributes).map { |name| [name, name] }]
+      Hash[Array.wrap(attributes).map { |name| [name, name] }]
     end
   end
 end
