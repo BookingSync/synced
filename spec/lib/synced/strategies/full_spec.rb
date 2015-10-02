@@ -394,7 +394,7 @@ describe Synced::Strategies::Full do
         expect(account.api).to receive(:paginate)
           .with("bookings", { auto_paginate: true, from: from, updated_since: nil })
           .and_return(remote_objects)
-        Booking.synchronize(scope: account, search_params: { from: from })
+        Booking.synchronize(scope: account, query_params: { from: from })
       end
 
       context "for model with updated since strategy and remove: true" do
@@ -408,7 +408,7 @@ describe Synced::Strategies::Full do
           expect(account.api).to receive(:last_response)
             .and_return(double({ meta: { deleted_ids: [] } }))
           expect {
-            Booking.synchronize(scope: account, remove: true, search_params: {})
+            Booking.synchronize(scope: account, remove: true, query_params: {})
           }.to change { account.bookings.count }.by(1)
         end
       end
@@ -541,14 +541,14 @@ describe Synced::Strategies::Full do
           expect(account.api).to receive(:paginate)
             .with("bookings", { updated_since: "2010-01-01 12:12:12",
               auto_paginate: true }).and_return(remote_objects)
-          Booking.synchronize(scope: account, search_params: {})
+          Booking.synchronize(scope: account, query_params: {})
         end
 
         context "when remove: true" do
           it "destroys local object by ids from response's meta" do
             VCR.use_cassette("deleted_ids_meta") do
               expect {
-                Booking.synchronize(scope: account, remove: true, search_params: {})
+                Booking.synchronize(scope: account, remove: true, query_params: {})
               }.to change { Booking.where(synced_id: 2).count }.from(1).to(0)
             end
           end
@@ -558,7 +558,7 @@ describe Synced::Strategies::Full do
           VCR.use_cassette("deleted_ids_meta") do
             expect {
               expect {
-                Booking.synchronize(scope: account, search_params: {})
+                Booking.synchronize(scope: account, query_params: {})
               }.to change { Booking.find_by(synced_id: 200).synced_all_at }
             }.to change { Booking.find_by(synced_id: 2).synced_all_at }
           end
@@ -598,7 +598,7 @@ describe Synced::Strategies::Full do
             .with("bookings", { updated_since: nil, auto_paginate: true,
               include: [:comments, :reviews] })
             .and_return(remote_objects)
-          Booking.synchronize(scope: account, include: [:comments, :reviews], search_params: {})
+          Booking.synchronize(scope: account, include: [:comments, :reviews], query_params: {})
         end
 
         context "and associations present" do

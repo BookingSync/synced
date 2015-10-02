@@ -64,7 +64,7 @@ module Synced
         @perform_request       = options[:remote].nil? && !@association_sync
         @remote_objects        = Array.wrap(options[:remote]) unless @perform_request
         @globalized_attributes = synced_attributes_as_hash(options[:globalized_attributes])
-        @search_params         = options[:search_params]
+        @query_params         = options[:query_params]
       end
 
       def perform
@@ -184,11 +184,11 @@ module Synced
           end
           options[:fields] = @fields if @fields.present?
           options[:auto_paginate] = true
-        end.merge(search_params)
+        end.merge(query_params)
       end
 
-      def search_params
-        Hash[@search_params.map do |param, value|
+      def query_params
+        Hash[@query_params.map do |param, value|
           final_value = value.respond_to?(:call) ? search_param_value_for_lambda(value) : value
           [param, final_value]
         end]

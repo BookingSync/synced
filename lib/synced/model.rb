@@ -34,19 +34,19 @@ module Synced
     #   Works only for partial (updated_since param) synchronizations.
     # @option options [Array|Hash] delegate_attributes: Given attributes will be defined
     #   on synchronized object and delegated to synced_data Hash
-    # @option options [Hash] search_params: Given attributes and their values
+    # @option options [Hash] query_params: Given attributes and their values
     #   which will be passed to api client to perform search
     def synced(options = {})
       options.symbolize_keys!
       options.assert_valid_keys(:associations, :data_key, :fields,
         :globalized_attributes, :id_key, :include, :initial_sync_since,
         :local_attributes, :mapper, :only_updated, :remove, :synced_all_at_key,
-        :delegate_attributes, :search_params)
+        :delegate_attributes, :query_params)
       class_attribute :synced_id_key, :synced_all_at_key, :synced_data_key,
         :synced_local_attributes, :synced_associations, :synced_only_updated,
         :synced_mapper, :synced_remove, :synced_include, :synced_fields,
         :synced_globalized_attributes, :synced_initial_sync_since, :synced_delegate_attributes,
-        :synced_search_params
+        :synced_query_params
       self.synced_id_key                = options.fetch(:id_key, :synced_id)
       self.synced_all_at_key            = options.fetch(:synced_all_at_key,
         synced_column_presence(:synced_all_at))
@@ -65,7 +65,7 @@ module Synced
       self.synced_initial_sync_since    = options.fetch(:initial_sync_since,
         nil)
       self.synced_delegate_attributes   = options.fetch(:delegate_attributes, [])
-      self.synced_search_params         = options.fetch(:search_params, {})
+      self.synced_query_params         = options.fetch(:query_params, {})
       include Synced::DelegateAttributes
       include Synced::HasSyncedData
     end
@@ -102,11 +102,11 @@ module Synced
     def synchronize(options = {})
       options.symbolize_keys!
       options.assert_valid_keys(:api, :fields, :include, :remote, :remove,
-        :scope, :strategy, :search_params, :association_sync)
+        :scope, :strategy, :query_params, :association_sync)
       options[:remove]  = synced_remove unless options.has_key?(:remove)
       options[:include] = Array.wrap(synced_include) unless options.has_key?(:include)
       options[:fields]  = Array.wrap(synced_fields) unless options.has_key?(:fields)
-      options[:search_params] = synced_search_params unless options.has_key?(:search_params)
+      options[:query_params] = synced_query_params unless options.has_key?(:query_params)
       options.merge!({
         id_key:                synced_id_key,
         synced_data_key:       synced_data_key,
