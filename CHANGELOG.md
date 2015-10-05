@@ -1,4 +1,4 @@
-## master
+## 1.1.2
   * [bugfix] Fix remote_objects array wrapping to allow single remote_object sync to local association
 
 ## 1.1.1
