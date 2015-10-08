@@ -420,11 +420,10 @@ describe Synced::Strategies::Full do
             remote_object(id: 100, filename: 'b.jpg')])
         ] }
 
-
         it "makes api request with include" do
           allow(Location).to receive(:api).and_return(api)
           expect(api).to receive(:paginate)
-            .with("locations", { include: [:photos, :addresses], auto_paginate: true })
+            .with("locations", { include: [:photos, :destination, :addresses], auto_paginate: true })
             .and_return(remote_objects)
           Location.synchronize
         end
@@ -441,6 +440,18 @@ describe Synced::Strategies::Full do
           photo = location.photos.first
           expect(photo.synced_id).to eq(100)
           expect(photo.filename).to eq('b.jpg')
+        end
+      end
+
+      context "with nil has_one association" do
+        let(:remote_objects) { [remote_object(id: 12, destination: nil)] }
+        let(:api) { Location.api }
+
+        it "does not perform a request to fetch missing association" do
+          expect(api).to receive(:paginate).and_return(remote_objects)
+          expect {
+            Location.synchronize(api: api)
+          }.to change { Destination.count }.by(0)
         end
       end
 
@@ -598,7 +609,7 @@ describe Synced::Strategies::Full do
             allow(Location).to receive(:api).and_return(api)
             expect(api).to receive(:paginate)
               .with("locations", { auto_paginate: true,
-                include: [:photos, :comments] })
+                include: [:photos, :destination, :comments] })
               .and_return(remote_objects)
             Location.synchronize(include: [:comments])
           end
@@ -627,7 +638,7 @@ describe Synced::Strategies::Full do
           it "adds include from model and associations to the API request" do
             expect(api).to receive(:paginate)
               .with("locations", { auto_paginate: true,
-                include: [:photos, :addresses] })
+                include: [:photos, :destination, :addresses] })
               .and_return(remote_objects)
             Location.synchronize
           end

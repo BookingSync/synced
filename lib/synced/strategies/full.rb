@@ -60,7 +60,8 @@ module Synced
         @fields                = options[:fields]
         @remove                = options[:remove]
         @associations          = Array.wrap(options[:associations])
-        @perform_request       = options[:remote].nil?
+        @association_sync      = options[:association_sync]
+        @perform_request       = options[:remote].nil? && !@association_sync
         @remote_objects        = Array.wrap(options[:remote]) unless @perform_request
         @globalized_attributes = synced_attributes_as_hash(options[:globalized_attributes])
         @search_params         = options[:search_params]
@@ -97,7 +98,8 @@ module Synced
       def synchronize_associations(remote, local_object)
         @associations.each do |association|
           klass = association.to_s.classify.constantize
-          klass.synchronize(remote: remote[association], scope: local_object, remove: @remove)
+          klass.synchronize(remote: remote[association], scope: local_object, remove: @remove,
+            association_sync: true)
         end
       end
 

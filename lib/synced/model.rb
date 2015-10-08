@@ -102,7 +102,7 @@ module Synced
     def synchronize(options = {})
       options.symbolize_keys!
       options.assert_valid_keys(:api, :fields, :include, :remote, :remove,
-        :scope, :strategy, :search_params)
+        :scope, :strategy, :search_params, :association_sync)
       options[:remove]  = synced_remove unless options.has_key?(:remove)
       options[:include] = Array.wrap(synced_include) unless options.has_key?(:include)
       options[:fields]  = Array.wrap(synced_fields) unless options.has_key?(:fields)
