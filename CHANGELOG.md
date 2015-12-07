@@ -1,4 +1,4 @@
-## master
+## 1.1.3
   * [bugfix] Do not perform requests for blank has_one associations
 
 ## 1.1.2
