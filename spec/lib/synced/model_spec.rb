@@ -125,7 +125,7 @@ describe Synced::Model do
           Rental.synchronize(i_have_no_memory_of_this_place: true)
         }.to raise_error { |error|
           expect(error.message).to eq "Unknown key: :i_have_no_memory_of_this_place. " \
-            + "Valid keys are: :api, :fields, :include, :remote, :remove, :scope, :strategy, :search_params"
+            + "Valid keys are: :api, :fields, :include, :remote, :remove, :scope, :strategy, :search_params, :association_sync"
         }
       end
     end

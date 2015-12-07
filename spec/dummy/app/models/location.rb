@@ -1,8 +1,10 @@
 class Location < ActiveRecord::Base
-  synced associations: :photos, remove: true, include: :addresses,
+  synced associations: [:photos, :destination], remove: true, include: :addresses,
     globalized_attributes: :name
 
   has_many :photos
+  has_many :destinations
+  has_one :destination
   translates :name
 
   def self.api
