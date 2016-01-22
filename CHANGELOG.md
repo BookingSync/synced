@@ -1,3 +1,6 @@
+## master
+  * [refactor] Change `search_params` to `query_params`
+
 ## 1.1.3
   * [bugfix] Do not perform requests for blank has_one associations
 

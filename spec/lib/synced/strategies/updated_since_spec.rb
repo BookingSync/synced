@@ -19,7 +19,7 @@ describe Synced::Strategies::UpdatedSince do
 
         it "raises CannotDeleteDueToNoDeletedIdsError" do
           expect {
-            Booking.synchronize(scope: account, remove: true, search_params: {})
+            Booking.synchronize(scope: account, remove: true, query_params: {})
           }.to raise_error(Synced::Strategies::UpdatedSince::CannotDeleteDueToNoDeletedIdsError) { |ex|
             msg = "Cannot delete Bookings. No deleted_ids were returned in API response."
             expect(ex.message).to eq msg
@@ -37,14 +37,14 @@ describe Synced::Strategies::UpdatedSince do
 
         it "looks for last_response within the same api instance" do
           VCR.use_cassette("deleted_ids_meta") do
-            expect { Booking.synchronize(remove: true, search_params: {}) }.not_to raise_error
+            expect { Booking.synchronize(remove: true, query_params: {}) }.not_to raise_error
           end
         end
 
         it "deletes the booking" do
           VCR.use_cassette("deleted_ids_meta") do
             expect {
-              Booking.synchronize(remove: true, search_params: {})
+              Booking.synchronize(remove: true, query_params: {})
             }.to change { Booking.where(synced_id: 2).count }.from(1).to(0)
           end
         end
