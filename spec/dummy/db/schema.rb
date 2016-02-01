@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20141029121624) do
+ActiveRecord::Schema.define(version: 20160126083233) do
 
   create_table "accounts", force: true do |t|
     t.string   "name"
@@ -74,6 +74,16 @@ ActiveRecord::Schema.define(version: 20141029121624) do
     t.datetime "updated_at"
   end
 
+  create_table "los_records", force: true do |t|
+    t.integer  "account_id"
+    t.integer  "synced_id"
+    t.integer  "rate"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "los_records", ["account_id"], name: "index_los_records_on_account_id"
+
   create_table "periods", force: true do |t|
     t.string   "start_date"
     t.string   "end_date"
@@ -103,5 +113,14 @@ ActiveRecord::Schema.define(version: 20141029121624) do
   end
 
   add_index "rentals", ["synced_id"], name: "index_rentals_on_synced_id"
+
+  create_table "synced_timestamps", force: true do |t|
+    t.integer  "parent_scope_id",   null: false
+    t.string   "parent_scope_type", null: false
+    t.string   "model_class",       null: false
+    t.datetime "synced_at",         null: false
+  end
+
+  add_index "synced_timestamps", ["parent_scope_id", "parent_scope_type", "synced_at"], name: "synced_timestamps_max_index"
 
 end

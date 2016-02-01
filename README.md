@@ -77,6 +77,13 @@ rental.synced_data.bedrooms # => 4
 rental.synced_data.rental_type # => "villa"
 ```
 
+## Synced strategies
+
+There are currently 3 synced strategies: `:full`, `:updated_since` and `:check`.
+- `:full` strategy fetches all available data each time, being simple but very inefficient in most cases.
+- `:updated_since` is default strategy and syncs only changes since last sync. It's more efficient, but also more complex.
+- `:check` strategy fetches everything like full one, but only compares the datas without updating anything.
+
 ## Synced database fields
 
 Option name          | Default value    | Description                             | Required |
@@ -89,8 +96,7 @@ Custom fields name can be configured in the `synced` statement of your model:
 
 ```ruby
 class Rental < ActiveRecord::Base
-  synced id_key: :remote_id, data_key: :remote_data,
-    synced_all_at_key: :remote_all_synced_at
+  synced id_key: :remote_id, data_key: :remote_data
 end
 ```
 
@@ -201,19 +207,29 @@ end
 
 This will map remote `:description` to local `:headline` attribute.
 
-## Partial updates (using updated since parameter)
+## Partial updates (using `:updated_since` strategy)
 
 Partial updates mean that first synchronization will copy all of the remote
 objects into local database and next synchronizations will sync only
 added/changed and removed objects. This significantly improves synchronization
 time and saves network traffic.
 
-In order to enable it add timestamp column named `synced_all_at` to your
-database. Synced will automatically detect it.
-
 NOTE: In order it to work, given endpoint needs to support updated_since
 parameter. Check [API documentation](http://docs.api.bookingsync.com/reference/)
 for given endpoint.
+
+### Storing last sync timestamps
+
+When using `:updated_since` sync strategy you need to store the timestamp of the last sync somewhere.
+By default `Synced::Strategies::SyncedAllAtTimestampStrategy` strategy is used, which requires
+`synced_all_at` column to be present in the synced model. This is simple solution but on large syncs it causes serious
+overhead on updating the timestamps on all the records.
+
+There is also a `Synced::Strategies::SyncedPerScopeTimestampStrategy`, that uses another model,
+`Synced::Timestamp`, to store the synchronization timestamps. Migration can be copied from the synced dummy app
+`spec/dummy/db/migrate/20160126082137_create_synced_timestamps.rb`.
+This strategy is added to fix the problems with massive updates on `synced_all_at`. Proper cleanup of timestamp records
+is needed once in a while with `Synced::Timestamp.cleanup` (cleans records older than 1 week).
 
 ### Forcing local objects to be re-synced with the API
 
@@ -392,7 +408,6 @@ Option name          | Default value    | Description                           
 ---------------------|------------------|-----------------------------------------------------------------------------------|--------|-------------|
 `:id_key`            | `:synced_id`     | ID of the object fetched from the API                                             | YES    | NO          |
 `:data_key`          | `:synced_data`   | Object fetched from the API                                                       | YES    | NO          |
-`:synced_all_at_key` | `:synced_all_at` | Time of the last synchronization                                                  | YES    | NO          |
 `:associations`      | `[]`             | [Sync remote associations to local ones](#associations)                           | YES    | NO          |
 `:local_attributes`  | `[]`             | [Sync remote attributes to local ones](#local-attributes)                         | YES    | NO          |
 `:mapper`            | `nil`            | [Module used for mapping remote objects](#local-attributes-with-mapping-modules)  | YES    | NO          |

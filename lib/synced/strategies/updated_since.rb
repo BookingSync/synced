@@ -1,3 +1,6 @@
+require "synced/strategies/synced_all_at_timestamp_strategy"
+require "synced/strategies/synced_per_scope_timestamp_strategy"
+
 module Synced
   module Strategies
     # This strategy performs partial synchronization.
@@ -8,16 +11,22 @@ module Synced
       def initialize(model_class, options = {})
         super
         @initial_sync_since = options[:initial_sync_since]
+        timestampt_strategy_class = options[:timestamp_strategy] || Synced::Strategies::SyncedAllAtTimestampStrategy
+        @timestamp_strategy = timestampt_strategy_class.new(relation_scope: relation_scope, scope: @scope, model_class: model_class)
       end
 
       def perform
         super.tap do |local_objects|
-          instrument("update_synced_all_at_perform.synced", model: @model_class) do
+          instrument("update_synced_timestamp_perform.synced", model: @model_class) do
             # TODO: it can't be Time.now. this value has to be fetched from the API as well
             # https://github.com/BookingSync/synced/issues/29
-            relation_scope.update_all(@synced_all_at_key => Time.now)
+            @timestamp_strategy.update(Time.now)
           end
         end
+      end
+
+      def reset_synced
+        @timestamp_strategy.reset
       end
 
       private
@@ -37,7 +46,7 @@ module Synced
 
       def updated_since
         instrument("updated_since.synced") do
-          [relation_scope.minimum(@synced_all_at_key), initial_sync_since].compact.max
+          [@timestamp_strategy.last_synced_at, initial_sync_since].compact.max
         end
       end
 

@@ -22,8 +22,6 @@ module Synced
     #   will be synchronized. By default it's model_class.
     # @option options [Symbol] id_key: attribute name under which
     #   remote object's ID is stored, default is :synced_id.
-    # @option options [Symbol] synced_all_at_key: attribute name under which
-    #   remote object's sync time is stored, default is :synced_all_at
     # @option options [Symbol] data_key: attribute name under which remote
     #   object's data is stored.
     # @option options [Array] local_attributes: Array of attributes in the remote
@@ -46,29 +44,31 @@ module Synced
     # @option options [Array|Hash] globalized_attributes: A list of attributes
     #   which will be mapped with their translations.
     # @option options [Symbol] strategy: Strategy to be used for synchronization
-    #   process, possible values are :full, :updated_since, :check and nil. Default
-    #   is nil, so strategy will be chosen automatically.
-    def initialize(model_class, options = {})
+    #   process, possible values are :full, :updated_since, :check.
+    def initialize(model_class, strategy:, **options)
       @model_class       = model_class
-      @synced_all_at_key = options[:synced_all_at_key]
       @only_updated      = options[:only_updated]
-      @perform_request   = options[:remote].nil?
-      @strategy          = strategy_class(options[:strategy]).new(model_class, options)
+      @remote            = options[:remote]
+      @strategy          = strategy_class(strategy).new(model_class, options)
     end
 
     def perform
       @strategy.perform
     end
 
+    def reset_synced
+      @strategy.reset_synced
+    end
+
     private
 
     def strategy_class(name)
-      name ||= updated_since? ? :updated_since : :full
+      name = :full if force_full_strategy?
       "Synced::Strategies::#{name.to_s.classify}".constantize
     end
 
-    def updated_since?
-      @only_updated && @synced_all_at_key && @perform_request
+    def force_full_strategy?
+      @remote
     end
   end
 end

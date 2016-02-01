@@ -1,4 +1,7 @@
 ## master
+  * [refactor] Delegate `reset_synced` functionality to strategy
+  * [refactor] Extract updated_since timestamps (`synced_all_at`) as a separate strategy, add second timestamps strategy that uses external table instead of `synced_all_at` fields.
+  * [refactor] Removed dynamic strategy resolution. :updated_since is now a default strategy, to use :full strategy specify it in synced declaration, `synced strategy: :full`
   * [refactor] Change `search_params` to `query_params`
 
 ## 1.1.3

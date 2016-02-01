@@ -1,5 +1,5 @@
 class Photo < ActiveRecord::Base
-  synced local_attributes: :filename
+  synced local_attributes: :filename, strategy: :full
   belongs_to :location
 
   def self.cancel_all

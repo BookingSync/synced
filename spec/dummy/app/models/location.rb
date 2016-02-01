@@ -1,6 +1,6 @@
 class Location < ActiveRecord::Base
   synced associations: [:photos, :destination], remove: true, include: :addresses,
-    globalized_attributes: :name
+    globalized_attributes: :name, strategy: :full
 
   has_many :photos
   has_many :destinations
