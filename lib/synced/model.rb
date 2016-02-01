@@ -6,11 +6,10 @@ module Synced
     #
     # @param options [Hash] Configuration options for synced. They are inherited
     #   by subclasses, but can be overwritten in the subclass.
+    # @option options [Symbol] strategy: synchronization strategy, one of :full, :updated_since, :check.
+    #   Defaults to :updated_since
     # @option options [Symbol] id_key: attribute name under which
     #   remote object's ID is stored, default is :synced_id.
-    # @option options [Symbol] synced_all_at_key: attribute name under which
-    #   last synchronization time is stored, default is :synced_all_at. It's only
-    #   used when only_updated option is enabled.
     # @option options [Boolean] only_updated: If true requests to API will take
     #   advantage of updated_since param and fetch only created/changed/deleted
     #   remote objects
@@ -36,26 +35,23 @@ module Synced
     #   on synchronized object and delegated to synced_data Hash
     # @option options [Hash] query_params: Given attributes and their values
     #   which will be passed to api client to perform search
-    def synced(options = {})
-      options.symbolize_keys!
+    def synced(strategy: :updated_since, **options)
       options.assert_valid_keys(:associations, :data_key, :fields,
         :globalized_attributes, :id_key, :include, :initial_sync_since,
-        :local_attributes, :mapper, :only_updated, :remove, :synced_all_at_key,
-        :delegate_attributes, :query_params)
-      class_attribute :synced_id_key, :synced_all_at_key, :synced_data_key,
+        :local_attributes, :mapper, :only_updated, :remove,
+        :delegate_attributes, :query_params, :timestamp_strategy)
+      class_attribute :synced_id_key, :synced_data_key,
         :synced_local_attributes, :synced_associations, :synced_only_updated,
         :synced_mapper, :synced_remove, :synced_include, :synced_fields,
         :synced_globalized_attributes, :synced_initial_sync_since, :synced_delegate_attributes,
-        :synced_query_params
+        :synced_query_params, :synced_timestamp_strategy, :synced_strategy
+      self.synced_strategy              = strategy
       self.synced_id_key                = options.fetch(:id_key, :synced_id)
-      self.synced_all_at_key            = options.fetch(:synced_all_at_key,
-        synced_column_presence(:synced_all_at))
       self.synced_data_key              = options.fetch(:data_key,
         synced_column_presence(:synced_data))
       self.synced_local_attributes      = options.fetch(:local_attributes, [])
       self.synced_associations          = options.fetch(:associations, [])
-      self.synced_only_updated          = options.fetch(:only_updated,
-        column_names.include?(synced_all_at_key.to_s))
+      self.synced_only_updated          = options.fetch(:only_updated, synced_strategy == :updated_since)
       self.synced_mapper                = options.fetch(:mapper, nil)
       self.synced_remove                = options.fetch(:remove, false)
       self.synced_include               = options.fetch(:include, [])
@@ -65,7 +61,8 @@ module Synced
       self.synced_initial_sync_since    = options.fetch(:initial_sync_since,
         nil)
       self.synced_delegate_attributes   = options.fetch(:delegate_attributes, [])
-      self.synced_query_params         = options.fetch(:query_params, {})
+      self.synced_query_params          = options.fetch(:query_params, {})
+      self.synced_timestamp_strategy    = options.fetch(:timestamp_strategy, nil)
       include Synced::DelegateAttributes
       include Synced::HasSyncedData
     end
@@ -77,7 +74,7 @@ module Synced
     # @param model_class [Class] - ActiveRecord model class to which remote objects
     #   will be synchronized.
     # @param scope [ActiveRecord::Base] - Within this object scope local objects
-    #   will be synchronized. By default it's model_class.
+    #   will be synchronized. By default it's model_class. Can be infered from active record association scope.
     # @param remove [Boolean] - If it's true all local objects within
     #   current scope which are not present in the remote array will be destroyed.
     #   If only_updated is enabled, ids of objects to be deleted will be taken
@@ -97,41 +94,54 @@ module Synced
     #   create/remove/update rentals only within website.
     #   It requires relation website.rentals to exist.
     #
-    #  Rental.synchronize(remote: remote_rentals, scope: website)
+    #  website.rentals.synchronize(remote: remote_rentals)
     #
-    def synchronize(options = {})
-      options.symbolize_keys!
-      options.assert_valid_keys(:api, :fields, :include, :remote, :remove,
-        :scope, :strategy, :query_params, :association_sync)
+    def synchronize(scope: scope_from_relation, strategy: synced_strategy, **options)
+      options.assert_valid_keys(:api, :fields, :include, :remote, :remove, :query_params, :association_sync)
       options[:remove]  = synced_remove unless options.has_key?(:remove)
       options[:include] = Array.wrap(synced_include) unless options.has_key?(:include)
       options[:fields]  = Array.wrap(synced_fields) unless options.has_key?(:fields)
       options[:query_params] = synced_query_params unless options.has_key?(:query_params)
       options.merge!({
+        scope:                 scope,
+        strategy:              strategy,
         id_key:                synced_id_key,
         synced_data_key:       synced_data_key,
-        synced_all_at_key:     synced_all_at_key,
         data_key:              synced_data_key,
         local_attributes:      synced_local_attributes,
         associations:          synced_associations,
         only_updated:          synced_only_updated,
         mapper:                synced_mapper,
         globalized_attributes: synced_globalized_attributes,
-        initial_sync_since:    synced_initial_sync_since
+        initial_sync_since:    synced_initial_sync_since,
+        timestamp_strategy:    synced_timestamp_strategy
       })
       Synced::Synchronizer.new(self, options).perform
     end
 
-    # Reset synced_all_at for given scope, this forces synced to sync
+    # Reset last sync timestamp for given scope, this forces synced to sync
     # all the records on the next sync. Useful for cases when you add
     # a new column to be synced and you use updated since strategy for faster
     # synchronization.
-    def reset_synced
-      return unless synced_only_updated
-      update_all(synced_all_at_key => nil)
+    def reset_synced(scope: scope_from_relation)
+      options = {
+        scope:                 scope,
+        strategy:              synced_strategy,
+        only_updated:          synced_only_updated,
+        initial_sync_since:    synced_initial_sync_since,
+        timestamp_strategy:    synced_timestamp_strategy
+      }
+      Synced::Synchronizer.new(self, options).reset_synced
     end
 
     private
+
+    # attempt to get scope from association reflection, so you could do:
+    # account.bookings.synchronize
+    # and the scope would be account
+    def scope_from_relation
+      all.proxy_association.owner if all.respond_to?(:proxy_association)
+    end
 
     def synced_column_presence(name)
       name if column_names.include?(name.to_s)

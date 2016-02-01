@@ -21,8 +21,6 @@ module Synced
       #   will be synchronized. By default it's model_class.
       # @option options [Symbol] id_key: attribute name under which
       #   remote object's ID is stored, default is :synced_id.
-      # @option options [Symbol] synced_all_at_key: attribute name under which
-      #   remote object's sync time is stored, default is :synced_all_at
       # @option options [Symbol] data_key: attribute name under which remote
       #   object's data is stored.
       # @option options [Array] local_attributes: Array of attributes in the remote
@@ -48,7 +46,6 @@ module Synced
         @model_class           = model_class
         @scope                 = options[:scope]
         @id_key                = options[:id_key]
-        @synced_all_at_key     = options[:synced_all_at_key]
         @data_key              = options[:data_key]
         @remove                = options[:remove]
         @only_updated          = options[:only_updated]
@@ -91,6 +88,10 @@ module Synced
             end
           end
         end
+      end
+
+      def reset_synced
+        RuntimeError.new("Full strategy does not support reset_synced functionality")
       end
 
       private

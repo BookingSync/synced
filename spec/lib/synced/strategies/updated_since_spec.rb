@@ -63,5 +63,41 @@ describe Synced::Strategies::UpdatedSince do
         end
       end
     end
+
+    describe "with SyncedPerScopeTimestampStrategy timestamp strategy" do
+      context "with account scope" do
+        it "it stores, uses and resets timestamps for given scope" do
+          first_sync_time = Time.zone.now.round - 1.hour
+
+          # initial sync
+          Timecop.freeze(first_sync_time) do
+            expect(account.api).to receive(:paginate).with("los_records", hash_including(updated_since: nil)).and_return([])
+            expect {
+              account.los_records.synchronize
+            }.to change { Synced::Timestamp.with_scope_and_model(account, LosRecord).last_synced_at }.from(nil).to(first_sync_time)
+          end
+
+          # second sync using the set timestamps
+          second_sync_time = Time.zone.now.round
+          Timecop.freeze(second_sync_time) do
+            expect(account.api).to receive(:paginate).with("los_records", hash_including(updated_since: first_sync_time)).and_return([])
+            expect {
+              account.los_records.synchronize
+            }.to change { Synced::Timestamp.with_scope_and_model(account, LosRecord).last_synced_at }.from(first_sync_time).to(second_sync_time)
+          end
+
+          # reset sync
+          expect {
+            account.los_records.reset_synced
+          }.to change { Synced::Timestamp.with_scope_and_model(account, LosRecord).last_synced_at }.from(second_sync_time).to(nil)
+
+          # new fresh sync without timestamp
+          expect(account.api).to receive(:paginate).with("los_records", hash_including(updated_since: nil)).and_return([])
+          expect {
+            account.los_records.synchronize
+          }.to change { Synced::Timestamp.with_scope_and_model(account, LosRecord).last_synced_at }.from(nil)
+        end
+      end
+    end
   end
 end

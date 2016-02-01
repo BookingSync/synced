@@ -14,12 +14,6 @@ describe Synced::Model do
     end
   end
 
-  describe ".synced_all_at_key" do
-    it "returns key used for storing object's synchronization time" do
-      expect(DummyModel.synced_all_at_key).to eq :synced_all_at
-    end
-  end
-
   describe ".synced_data_key" do
     it "returns key used for storing remote data" do
       expect(DummyModel.synced_data_key).to eq :synced_data
@@ -50,13 +44,6 @@ describe Synced::Model do
       expect(klass.synced_id_key).to eq :remote_id
     end
 
-    it "allows to set custom synced_all_at_key" do
-      klass = dummy_model do
-        synced synced_all_at_key: :remote_updated_at
-      end
-      expect(klass.synced_all_at_key).to eq :remote_updated_at
-    end
-
     it "allows to set custom synced_data_key" do
       klass = dummy_model do
         synced data_key: :remote_data
@@ -70,26 +57,6 @@ describe Synced::Model do
       end
     end
 
-    context "when .synced_all_at_key column is present" do
-      context "and only_updated is missing" do
-        it "enables only_updated strategy" do
-          klass = dummy_model(:synced_all_at) do
-            synced
-          end
-          expect(klass.synced_only_updated).to be true
-        end
-      end
-
-      context "and only_updated is set to false" do
-        it "disables only_updated strategy" do
-          klass = dummy_model(:synced_all_at) do
-            synced only_updated: false
-          end
-          expect(klass.synced_only_updated).to be false
-        end
-      end
-    end
-
     context "on unknown option" do
       it "raises unknown key exception" do
         expect {
@@ -98,15 +65,8 @@ describe Synced::Model do
           expect(error.message).to eq "Unknown key: :i_have_no_memory_of_this_place. " \
             + "Valid keys are: :associations, :data_key, :fields, :globalized_attributes, :id_key, " \
             + ":include, :initial_sync_since, :local_attributes, :mapper, :only_updated, :remove, " \
-            + ":synced_all_at_key, :delegate_attributes, :query_params"
+            + ":delegate_attributes, :query_params, :timestamp_strategy"
         }
-      end
-    end
-
-    context "on options keys given with strings" do
-      it "defines synced statement properly" do
-        klass = dummy_model { synced "id_key" => "some_id" }
-        expect(klass.synced_id_key).to eq "some_id"
       end
     end
   end
@@ -125,16 +85,8 @@ describe Synced::Model do
           Rental.synchronize(i_have_no_memory_of_this_place: true)
         }.to raise_error { |error|
           expect(error.message).to eq "Unknown key: :i_have_no_memory_of_this_place. " \
-            + "Valid keys are: :api, :fields, :include, :remote, :remove, :scope, :strategy, :query_params, :association_sync"
+            + "Valid keys are: :api, :fields, :include, :remote, :remove, :query_params, :association_sync"
         }
-      end
-    end
-
-    context "on options keys given with strings" do
-      it "synchronizes model" do
-        expect {
-          Rental.synchronize("remote" => [remote_object(id: 12)])
-        }.to change { Rental.count }.by(1)
       end
     end
 
@@ -166,6 +118,41 @@ describe Synced::Model do
         Booking.synchronize(scope: account, query_params: { from: from })
       end
     end
+
+    context "scope" do
+      let(:account) { Account.create(name: "test") }
+      let(:strategy) { double(:strategy, perform: true) }
+
+      context "when association is present" do
+        it "finds scope from the association" do
+          expect(Synced::Synchronizer).to receive(:new).with(anything, hash_including(scope: account)).and_return(strategy)
+          account.bookings.synchronize
+        end
+      end
+
+      context "when explicit scope given" do
+        let(:another_account) { Account.create(name: "another") }
+
+        it "overrides the associations one" do
+          expect(Synced::Synchronizer).to receive(:new).with(anything, hash_including(scope: another_account)).and_return(strategy)
+          account.bookings.synchronize(scope: another_account)
+        end
+
+        it "uses the scope given in options" do
+          expect(Synced::Synchronizer).to receive(:new).with(anything, hash_including(scope: another_account)).and_return(strategy)
+          Booking.synchronize(scope: another_account)
+        end
+      end
+
+      context "when no scope source available" do
+        let(:another_account) { Account.create(name: "another") }
+
+        it "the scope option is not set" do
+          expect(Synced::Synchronizer).to receive(:new).with(anything, hash_excluding(scope: another_account)).and_return(strategy)
+          Booking.synchronize
+        end
+      end
+    end
   end
 
   describe ".reset_synced" do
@@ -189,7 +176,7 @@ describe Synced::Model do
         booking = Booking.create(synced_all_at: 2.days.ago)
         expect {
           expect {
-            account.bookings.reset_synced
+            account.bookings.reset_synced(scope: account)
           }.to change { account.bookings.reload.map(&:synced_all_at) }.to [nil, nil]
         }.not_to change { booking.reload.synced_all_at }
       end
