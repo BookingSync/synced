@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160126083233) do
+ActiveRecord::Schema.define(version: 20160407102743) do
 
   create_table "accounts", force: true do |t|
     t.string   "name"
@@ -115,8 +115,8 @@ ActiveRecord::Schema.define(version: 20160126083233) do
   add_index "rentals", ["synced_id"], name: "index_rentals_on_synced_id"
 
   create_table "synced_timestamps", force: true do |t|
-    t.integer  "parent_scope_id",   null: false
-    t.string   "parent_scope_type", null: false
+    t.integer  "parent_scope_id"
+    t.string   "parent_scope_type"
     t.string   "model_class",       null: false
     t.datetime "synced_at",         null: false
   end
