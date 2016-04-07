@@ -1,4 +1,5 @@
 ## master
+  * [feature] Make scope no longer required for SyncedPerScopeTimestampStrategy (if you already have created the table, you should remove `null: false` constraint for `parent_scope_id` and `parent_scope_type` columns)
 
 ## 1.2.0
   * [refactor] Delegate `reset_synced` functionality to strategy
