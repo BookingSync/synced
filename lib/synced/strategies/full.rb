@@ -47,7 +47,6 @@ module Synced
         @scope                 = options[:scope]
         @id_key                = options[:id_key]
         @data_key              = options[:data_key]
-        @remove                = options[:remove]
         @only_updated          = options[:only_updated]
         @include               = options[:include]
         @local_attributes      = synced_attributes_as_hash(options[:local_attributes])
