@@ -157,35 +157,76 @@ describe Synced::Model do
 
   describe ".reset_synced" do
     let(:account) { Account.create }
-    let(:remote_bookings) { [remote_object(id: 12), remote_object(id: 15)] }
-    before do
-      allow(account.api).to receive(:paginate).with("bookings",
-        { updated_since: nil, auto_paginate: true })
-        .and_return(remote_bookings)
-      Booking.synchronize(scope: account, query_params: {})
-    end
 
-    it "resets synced_all_at column" do
-      expect {
-       Booking.reset_synced
-      }.to change { Booking.all.map(&:synced_all_at) }.to [nil, nil]
-    end
+    context "synced_all_at timestamp strategy (booking model)" do
+      let(:remote_bookings) { [remote_object(id: 12), remote_object(id: 15)] }
+      before do
+        allow(account.api).to receive(:paginate).with("bookings",
+          { updated_since: nil, auto_paginate: true })
+          .and_return(remote_bookings)
+        Booking.synchronize(scope: account, query_params: {})
+      end
 
-    context "invoked on relation" do
-      it "resets synced_all_at within given relation" do
-        booking = Booking.create(synced_all_at: 2.days.ago)
+      it "resets synced_all_at column" do
         expect {
+         Booking.reset_synced
+        }.to change { Booking.all.map(&:synced_all_at) }.to [nil, nil]
+      end
+
+      context "invoked on relation" do
+        it "resets synced_all_at within given relation" do
+          booking = Booking.create(synced_all_at: 2.days.ago)
           expect {
-            account.bookings.reset_synced(scope: account)
-          }.to change { account.bookings.reload.map(&:synced_all_at) }.to [nil, nil]
-        }.not_to change { booking.reload.synced_all_at }
+            expect {
+              account.bookings.reset_synced(scope: account)
+            }.to change { account.bookings.reload.map(&:synced_all_at) }.to [nil, nil]
+          }.not_to change { booking.reload.synced_all_at }
+        end
+      end
+
+      context "on model without synced_all_at column" do
+        it "doesn't try to update the column" do
+          expect(Location).to receive(:update_all).never
+          Location.reset_synced
+        end
       end
     end
 
-    context "on model without synced_all_at column" do
-      it "doesn't try to update the column" do
-        expect(Location).to receive(:update_all).never
-        Location.reset_synced
+    context "synced_per_scope timestamp strategy (los record model)" do
+      context "global reset" do
+        it "destroys all synced_timestamps records for LosRecord model, with and without scope" do
+          Synced::Timestamp.create(synced_at: Time.now, model_class: "LosRecord",
+            parent_scope_id: account.id, parent_scope_type: "Account")
+          expect {
+            LosRecord.reset_synced
+          }.to change(Synced::Timestamp, :count).by(-1)
+        end
+      end
+
+      context "scoped per account reset" do
+        let(:other_account) { Account.create }
+
+        it "destroys all synced_timestamps records for LosRecord model, with and without scope" do
+          timestamp_for_account = Synced::Timestamp.create(synced_at: Time.now,
+            model_class: "LosRecord",
+            parent_scope_id: account.id,
+            parent_scope_type: "Account"
+          )
+          timestamp_for_other_account = Synced::Timestamp.create(synced_at: Time.now,
+            model_class: "LosRecord",
+            parent_scope_id: other_account.id,
+            parent_scope_type: "Account"
+          )
+          expect {
+            account.los_records.reset_synced
+          }.to change(Synced::Timestamp, :count).by(-1)
+          expect {
+            timestamp_for_account.reload
+          }.to raise_error ActiveRecord::RecordNotFound
+          expect {
+            timestamp_for_other_account.reload
+          }.not_to raise_error
+        end
       end
     end
   end

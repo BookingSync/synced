@@ -1,9 +1,15 @@
 class Synced::Timestamp < ActiveRecord::Base
-  self.table_name = 'synced_timestamps'
+  self.table_name = "synced_timestamps"
+
   belongs_to :parent_scope, polymorphic: true
-  scope :with_scope_and_model, ->(parent_scope, model_class) { where(parent_scope: parent_scope, model_class: model_class.to_s) }
-  validates :parent_scope, :model_class, :synced_at, presence: true
-  scope :old, -> { where('synced_at < ?', 1.week.ago) }
+
+  validates :model_class, :synced_at, presence: true
+
+  scope :with_scope_and_model, -> (parent_scope, model_class) {
+    where(parent_scope: parent_scope, model_class: model_class.to_s)
+  }
+  scope :with_model, -> model_class { where(model_class: model_class.to_s) }
+  scope :old, -> { where("synced_at < ?", 1.week.ago) }
 
   def model_class=(value)
     write_attribute(:model_class, value.to_s)
