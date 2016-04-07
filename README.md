@@ -226,8 +226,29 @@ By default `Synced::Strategies::SyncedAllAtTimestampStrategy` strategy is used, 
 overhead on updating the timestamps on all the records.
 
 There is also a `Synced::Strategies::SyncedPerScopeTimestampStrategy`, that uses another model,
-`Synced::Timestamp`, to store the synchronization timestamps. Migration can be copied from the synced dummy app
-`spec/dummy/db/migrate/20160126082137_create_synced_timestamps.rb`.
+`Synced::Timestamp`, to store the synchronization timestamps. You can generate the  migration the following way:
+
+```
+rails generate migration create_synced_timestamps
+```
+
+and copy the body from here:
+
+```
+class CreateSyncedTimestamps < ActiveRecord::Migration
+  def change
+    create_table :synced_timestamps do |t|
+      t.belongs_to :parent_scope, polymorphic: true
+      t.string :model_class, null: false
+      t.datetime :synced_at, null: false
+    end
+
+    add_index :synced_timestamps, [:parent_scope_id, :parent_scope_type, :synced_at], name: 'synced_timestamps_max_index', order: { synced_at: 'DESC' }
+  end
+end
+```
+
+
 This strategy is added to fix the problems with massive updates on `synced_all_at`. Proper cleanup of timestamp records
 is needed once in a while with `Synced::Timestamp.cleanup` (cleans records older than 1 week).
 
