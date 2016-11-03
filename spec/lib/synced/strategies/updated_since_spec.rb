@@ -5,6 +5,8 @@ describe Synced::Strategies::UpdatedSince do
 
   describe "#perform" do
     context "with remove: true option" do
+      let(:request_timestamp) { 1.year.ago }
+
       context "deleted_ids are not present in metadata" do
         let(:remote_objects) { [remote_object(id: 12, name: "test-12")] }
         let(:account) { Account.create }
@@ -14,7 +16,9 @@ describe Synced::Strategies::UpdatedSince do
           allow(account.api).to receive(:paginate).with("bookings",
             { auto_paginate: true, updated_since: nil }).and_return(remote_objects)
           expect(account.api).to receive(:last_response)
-            .and_return(double({ meta: {} }))
+            .and_return(double({ meta: { } }))
+          expect(account.api).to receive(:pagination_first_response)
+            .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } }))
         end
 
         it "raises CannotDeleteDueToNoDeletedIdsError" do
@@ -33,20 +37,18 @@ describe Synced::Strategies::UpdatedSince do
         before do
           expect_any_instance_of(BookingSync::API::Client).to receive(:paginate).and_call_original
           expect_any_instance_of(BookingSync::API::Client).to receive(:last_response).and_call_original
+          stub_request(:get, "https://www.bookingsync.com/api/v3/bookings?updated_since=2010-01-01%2012:12:12%20UTC").
+                      to_return(:status => 200, body: {"bookings"=>[{"short_name"=>"one", "id"=>1, "account_id"=>1, "rental_id"=>2, "start_at"=>"2014-04-28T10:55:13Z", "end_at"=>"2014-12-28T10:55:34Z"}], "meta"=>{"deleted_ids"=>[2, 17]}}.to_json, :headers => { "x-updated-since-request-synced-at" => request_timestamp.to_s })
         end
 
         it "looks for last_response within the same api instance" do
-          VCR.use_cassette("deleted_ids_meta") do
-            expect { Booking.synchronize(remove: true, query_params: {}) }.not_to raise_error
-          end
+          expect { Booking.synchronize(remove: true, query_params: {}) }.not_to raise_error
         end
 
         it "deletes the booking" do
-          VCR.use_cassette("deleted_ids_meta") do
-            expect {
-              Booking.synchronize(remove: true, query_params: {})
-            }.to change { Booking.where(synced_id: 2).count }.from(1).to(0)
-          end
+          expect {
+            Booking.synchronize(remove: true, query_params: {})
+          }.to change { Booking.where(synced_id: 2).count }.from(1).to(0)
         end
       end
     end
@@ -72,6 +74,8 @@ describe Synced::Strategies::UpdatedSince do
           # initial sync
           Timecop.freeze(first_sync_time) do
             expect(account.api).to receive(:paginate).with("los_records", hash_including(updated_since: nil)).and_return([])
+            expect(account.api).to receive(:pagination_first_response)
+              .and_return(double({ headers: { "x-updated-since-request-synced-at" => first_sync_time.to_s } }))
             expect {
               account.los_records.synchronize
             }.to change { Synced::Timestamp.with_scope_and_model(account, LosRecord).last_synced_at }.from(nil).to(first_sync_time)
@@ -81,6 +85,8 @@ describe Synced::Strategies::UpdatedSince do
           second_sync_time = Time.zone.now.round
           Timecop.freeze(second_sync_time) do
             expect(account.api).to receive(:paginate).with("los_records", hash_including(updated_since: first_sync_time)).and_return([])
+            expect(account.api).to receive(:pagination_first_response)
+              .and_return(double({ headers: { "x-updated-since-request-synced-at" => second_sync_time.to_s } }))
             expect {
               account.los_records.synchronize
             }.to change { Synced::Timestamp.with_scope_and_model(account, LosRecord).last_synced_at }.from(first_sync_time).to(second_sync_time)
@@ -92,11 +98,42 @@ describe Synced::Strategies::UpdatedSince do
           }.to change { Synced::Timestamp.with_scope_and_model(account, LosRecord).last_synced_at }.from(second_sync_time).to(nil)
 
           # new fresh sync without timestamp
+          future_sync_time = Time.zone.now.round + 1.hour
           expect(account.api).to receive(:paginate).with("los_records", hash_including(updated_since: nil)).and_return([])
+          expect(account.api).to receive(:pagination_first_response)
+              .and_return(double({ headers: { "x-updated-since-request-synced-at" => future_sync_time.to_s } }))
           expect {
             account.los_records.synchronize
-          }.to change { Synced::Timestamp.with_scope_and_model(account, LosRecord).last_synced_at }.from(nil)
+          }.to change { Synced::Timestamp.with_scope_and_model(account, LosRecord).last_synced_at }.from(nil).to(future_sync_time)
         end
+      end
+    end
+
+    context "with response without request_timestamp" do
+      let(:remote_objects) { [remote_object(id: 10, name: "Remote")] }
+
+      it "raises MissingTimestampError" do
+        expect(account.api).to receive(:paginate).with("bookings", hash_including(updated_since: nil)).and_return([])
+        expect(account.api).to receive(:pagination_first_response)
+              .and_return(double({ headers: { } }))
+        expect {
+          Booking.synchronize(scope: account, query_params: {})
+        }.to raise_error(Synced::Strategies::UpdatedSince::MissingTimestampError) { |ex|
+          msg = "Synchronization failed. API response is missing 'x-updated-since-request-synced-at' header."
+          expect(ex.message).to eq msg
+        }
+      end
+
+      it "prevents from syncing records" do
+        expect(account.api).to receive(:paginate).with("bookings", hash_including(updated_since: nil)).and_return(remote_objects)
+        expect(account.api).to receive(:pagination_first_response)
+              .and_return(double({ headers: { } }))
+        expect {
+          begin
+            Booking.synchronize(scope: account, query_params: {})
+          rescue Synced::Strategies::UpdatedSince::MissingTimestampError
+          end
+        }.not_to change { Booking.count }
       end
     end
   end
