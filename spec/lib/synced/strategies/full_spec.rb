@@ -390,7 +390,7 @@ describe Synced::Strategies::Full do
       end
 
       it "makes an api request with search params" do
-        from = Time.parse("2010-01-01 12:00:00")
+        from = Time.zone.parse("2010-01-01 12:00:00")
         expect(account.api).to receive(:paginate)
           .with("bookings", { auto_paginate: true, from: from, updated_since: nil })
           .and_return(remote_objects)
@@ -581,7 +581,7 @@ describe Synced::Strategies::Full do
         context "and there are no objects with higher synced_all_at time" do
           it "makes request to the API with initial_sync_since time" do
             expect(rental.api).to receive(:paginate).with("periods", {
-              updated_since: Time.parse("2009-04-19 14:44:32"),
+              updated_since: Time.zone.parse("2009-04-19 14:44:32"),
               auto_paginate: true }).and_return([])
             expect(rental.api).to receive(:pagination_first_response)
               .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } })).twice

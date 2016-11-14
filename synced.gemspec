@@ -21,6 +21,7 @@ Gem::Specification.new do |s|
   s.add_dependency "bookingsync-api", ">= 0.1.4"
   s.add_dependency "hashie"
 
+  s.add_development_dependency "appraisal"
   s.add_development_dependency "sqlite3"
   s.add_development_dependency "rspec-rails"
   s.add_development_dependency "listen", "~> 2.7"
@@ -28,6 +29,6 @@ Gem::Specification.new do |s|
   s.add_development_dependency "timecop"
   s.add_development_dependency "vcr"
   s.add_development_dependency "webmock"
-  s.add_development_dependency "globalize", "~> 4.0.2"
+  s.add_development_dependency "globalize", ">= 4.0.2"
   s.add_development_dependency "pry"
 end
