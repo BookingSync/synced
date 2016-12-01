@@ -2,6 +2,7 @@ require "spec_helper"
 
 describe Synced::Strategies::Full do
   let(:account) { Account.create(name: "test") }
+  let!(:request_timestamp) { 1.year.ago }
   let(:remote_objects) { [remote_object(id: 42, name: "Remote")] }
 
   describe "#perform" do
@@ -394,6 +395,8 @@ describe Synced::Strategies::Full do
         expect(account.api).to receive(:paginate)
           .with("bookings", { auto_paginate: true, from: from, updated_since: nil })
           .and_return(remote_objects)
+        expect(account.api).to receive(:pagination_first_response)
+              .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } }))
         Booking.synchronize(scope: account, query_params: { from: from })
       end
 
@@ -407,9 +410,12 @@ describe Synced::Strategies::Full do
           { auto_paginate: true, updated_since: nil }).and_return(remote_objects)
           expect(account.api).to receive(:last_response)
             .and_return(double({ meta: { deleted_ids: [] } }))
+          expect(account.api).to receive(:pagination_first_response)
+              .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.round.to_s } }))
           expect {
             Booking.synchronize(scope: account, remove: true, query_params: {})
           }.to change { account.bookings.count }.by(1)
+          expect(Booking.where(synced_all_at: request_timestamp.round).count).to eq(Booking.count)
         end
       end
 
@@ -535,33 +541,34 @@ describe Synced::Strategies::Full do
         before do
           allow_any_instance_of(BookingSync::API::Client).to receive(:paginate)
             .and_call_original
+          stub_request(:get, "https://www.bookingsync.com/api/v3/bookings?updated_since=2010-01-01%2012:12:12%20UTC").
+                      to_return(:status => 200, body: {"bookings"=>[{"short_name"=>"one", "id"=>1, "account_id"=>1, "rental_id"=>2, "start_at"=>"2014-04-28T10:55:13Z", "end_at"=>"2014-12-28T10:55:34Z"}], "meta"=>{"deleted_ids"=>[2, 17]}}.to_json, :headers => { "x-updated-since-request-synced-at" => request_timestamp.round.to_s })
         end
 
         it "makes request to the api with oldest synced_all_at" do
           expect(account.api).to receive(:paginate)
             .with("bookings", { updated_since: "2010-01-01 12:12:12",
               auto_paginate: true }).and_return(remote_objects)
+          expect(account.api).to receive(:pagination_first_response)
+              .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } }))
           Booking.synchronize(scope: account, query_params: {})
         end
 
         context "when remove: true" do
+
           it "destroys local object by ids from response's meta" do
-            VCR.use_cassette("deleted_ids_meta") do
-              expect {
-                Booking.synchronize(scope: account, remove: true, query_params: {})
-              }.to change { Booking.where(synced_id: 2).count }.from(1).to(0)
-            end
+            expect {
+              Booking.synchronize(scope: account, remove: true, query_params: {})
+            }.to change { Booking.where(synced_id: 2).count }.from(1).to(0)
           end
         end
 
         it "updates synced_all_at for all local object within current scope" do
-          VCR.use_cassette("deleted_ids_meta") do
+          expect {
             expect {
-              expect {
-                Booking.synchronize(scope: account, query_params: {})
-              }.to change { Booking.find_by(synced_id: 200).synced_all_at }
-            }.to change { Booking.find_by(synced_id: 2).synced_all_at }
-          end
+              Booking.synchronize(scope: account, query_params: {})
+            }.to change { Booking.find_by(synced_id: 200).synced_all_at.round }.to(request_timestamp.round)
+          }.to change { Booking.find_by(synced_id: 2).synced_all_at.round }.to(request_timestamp.round)
         end
       end
 
@@ -574,6 +581,8 @@ describe Synced::Strategies::Full do
             expect(rental.api).to receive(:paginate).with("periods", {
               updated_since: Time.parse("2009-04-19 14:44:32"),
               auto_paginate: true }).and_return([])
+            expect(rental.api).to receive(:pagination_first_response)
+              .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } }))
             Period.synchronize(scope: rental)
           end
         end
@@ -587,6 +596,8 @@ describe Synced::Strategies::Full do
             expect(rental.api).to receive(:paginate).with("periods", {
               updated_since: Time.parse("2014-01-01 03:05:06"),
               auto_paginate: true }).and_return([])
+            expect(rental.api).to receive(:pagination_first_response)
+              .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } }))
             Period.synchronize(scope: rental)
           end
         end
@@ -598,7 +609,10 @@ describe Synced::Strategies::Full do
             .with("bookings", { updated_since: nil, auto_paginate: true,
               include: [:comments, :reviews] })
             .and_return(remote_objects)
+          expect(account.api).to receive(:pagination_first_response)
+              .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.round.to_s } }))
           Booking.synchronize(scope: account, include: [:comments, :reviews], query_params: {})
+          expect(Booking.where(synced_all_at: request_timestamp.round).count).to eq(Booking.count)
         end
 
         context "and associations present" do

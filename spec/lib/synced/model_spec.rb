@@ -91,12 +91,16 @@ describe Synced::Model do
     end
 
     context "query_params" do
+      let(:request_timestamp) { 1.year.ago }
+
       it "uses query_params from class-level declaration accepting lambdas with arity 1
       (with argument being :scope) and passes value to api" do
         account = Account.create(name: "test")
         expect(account.api).to receive(:paginate)
           .with("bookings", { auto_paginate: true, from: account.import_bookings_since, updated_since: nil })
           .and_return([])
+        expect(account.api).to receive(:pagination_first_response)
+              .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } }))
         Booking.synchronize(scope: account)
       end
 
@@ -106,6 +110,8 @@ describe Synced::Model do
         expect(account.api).to receive(:paginate)
           .with("bookings", { auto_paginate: true, from: from, updated_since: nil })
           .and_return([])
+        expect(account.api).to receive(:pagination_first_response)
+              .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } }))
         Booking.synchronize(scope: account, query_params: { from: -> { from } })
       end
 
@@ -115,6 +121,8 @@ describe Synced::Model do
         expect(account.api).to receive(:paginate)
           .with("bookings", { auto_paginate: true, from: from, updated_since: nil })
           .and_return([])
+        expect(account.api).to receive(:pagination_first_response)
+              .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } }))
         Booking.synchronize(scope: account, query_params: { from: from })
       end
     end
@@ -157,6 +165,7 @@ describe Synced::Model do
 
   describe ".reset_synced" do
     let(:account) { Account.create }
+    let(:request_timestamp) { 1.year.ago }
 
     context "synced_all_at timestamp strategy (booking model)" do
       let(:remote_bookings) { [remote_object(id: 12), remote_object(id: 15)] }
@@ -164,6 +173,8 @@ describe Synced::Model do
         allow(account.api).to receive(:paginate).with("bookings",
           { updated_since: nil, auto_paginate: true })
           .and_return(remote_bookings)
+        expect(account.api).to receive(:pagination_first_response)
+              .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } }))
         Booking.synchronize(scope: account, query_params: {})
       end
 

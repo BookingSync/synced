@@ -16,11 +16,12 @@ module Synced
       end
 
       def perform
+        raise MissingTimestampError.new unless first_request_timestamp
         super.tap do |local_objects|
           instrument("update_synced_timestamp_perform.synced", model: @model_class) do
             # TODO: it can't be Time.now. this value has to be fetched from the API as well
             # https://github.com/BookingSync/synced/issues/29
-            @timestamp_strategy.update(Time.now)
+            @timestamp_strategy.update(first_request_timestamp)
           end
         end
       end
@@ -54,9 +55,20 @@ module Synced
         meta && meta[:deleted_ids] or raise CannotDeleteDueToNoDeletedIdsError.new(@model_class)
       end
 
+      def first_request_timestamp
+        if first_response_headers && first_response_headers["x-updated-since-request-synced-at"]
+          Time.zone.parse(first_response_headers["x-updated-since-request-synced-at"])
+        end
+      end
+
       def meta
         remote_objects
         @meta ||= api.last_response.meta
+      end
+
+      def first_response_headers
+        remote_objects
+        @first_response_headers ||= api.pagination_first_response.headers
       end
 
       # Remove all objects with ids from deleted_ids field in the meta key
@@ -77,6 +89,12 @@ module Synced
 
         def pluralized_model_class
           @model_class.to_s.pluralize
+        end
+      end
+
+      class MissingTimestampError < StandardError
+        def message
+          "Synchronization failed. API response is missing 'x-updated-since-request-synced-at' header."
         end
       end
     end
