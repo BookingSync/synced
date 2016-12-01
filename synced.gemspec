@@ -23,6 +23,7 @@ Gem::Specification.new do |s|
 
   s.add_development_dependency "sqlite3"
   s.add_development_dependency "rspec-rails"
+  s.add_development_dependency "listen", "~> 2.7"
   s.add_development_dependency "guard-rspec"
   s.add_development_dependency "timecop"
   s.add_development_dependency "vcr"
