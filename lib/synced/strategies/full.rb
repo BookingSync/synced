@@ -72,6 +72,7 @@ module Synced
             instrument("sync_perform.synced", model: @model_class) do
               remote_objects.map do |remote|
                 remote.extend(@mapper) if @mapper
+                remote[:synced_scope] = @scope
                 local_object = local_object_by_remote_id(remote.id) || relation_scope.new
                 local_object.attributes = default_attributes_mapping(remote)
                 local_object.attributes = local_attributes_mapping(remote)
