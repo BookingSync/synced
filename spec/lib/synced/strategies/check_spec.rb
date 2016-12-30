@@ -9,7 +9,7 @@ describe Synced::Strategies::Check do
 
   before do
     allow(account.api).to receive(:paginate).with("rentals",
-      { auto_paginate: true }).and_return(remote_rentals)
+      { per_page: 50 }).and_yield(remote_rentals)
   end
 
   it "returns hash with differences" do

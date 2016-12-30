@@ -16,9 +16,9 @@ describe Synced::Strategies::UpdatedSince do
           allow(account.api).to receive(:paginate).with("bookings",
             { auto_paginate: true, updated_since: nil }).and_return(remote_objects)
           expect(account.api).to receive(:last_response)
-            .and_return(double({ meta: { } }))
+            .and_return(double({ meta: { } })).twice
           expect(account.api).to receive(:pagination_first_response)
-            .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } }))
+            .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } })).twice
         end
 
         it "raises CannotDeleteDueToNoDeletedIdsError" do
@@ -36,7 +36,7 @@ describe Synced::Strategies::UpdatedSince do
 
         before do
           expect_any_instance_of(BookingSync::API::Client).to receive(:paginate).and_call_original
-          expect_any_instance_of(BookingSync::API::Client).to receive(:last_response).and_call_original
+          expect_any_instance_of(BookingSync::API::Client).to receive(:last_response).twice.and_call_original
           stub_request(:get, "https://www.bookingsync.com/api/v3/bookings?updated_since=2010-01-01%2012:12:12%20UTC").
                       to_return(:status => 200, body: {"bookings"=>[{"short_name"=>"one", "id"=>1, "account_id"=>1, "rental_id"=>2, "start_at"=>"2014-04-28T10:55:13Z", "end_at"=>"2014-12-28T10:55:34Z"}], "meta"=>{"deleted_ids"=>[2, 17]}}.to_json, :headers => { "x-updated-since-request-synced-at" => request_timestamp.to_s })
         end
@@ -75,7 +75,7 @@ describe Synced::Strategies::UpdatedSince do
           Timecop.freeze(first_sync_time) do
             expect(account.api).to receive(:paginate).with("los_records", hash_including(updated_since: nil)).and_return([])
             expect(account.api).to receive(:pagination_first_response)
-              .and_return(double({ headers: { "x-updated-since-request-synced-at" => first_sync_time.to_s } }))
+              .and_return(double({ headers: { "x-updated-since-request-synced-at" => first_sync_time.to_s } })).twice
             expect {
               account.los_records.synchronize
             }.to change { Synced::Timestamp.with_scope_and_model(account, LosRecord).last_synced_at }.from(nil).to(first_sync_time)
@@ -86,7 +86,7 @@ describe Synced::Strategies::UpdatedSince do
           Timecop.freeze(second_sync_time) do
             expect(account.api).to receive(:paginate).with("los_records", hash_including(updated_since: first_sync_time)).and_return([])
             expect(account.api).to receive(:pagination_first_response)
-              .and_return(double({ headers: { "x-updated-since-request-synced-at" => second_sync_time.to_s } }))
+              .and_return(double({ headers: { "x-updated-since-request-synced-at" => second_sync_time.to_s } })).twice
             expect {
               account.los_records.synchronize
             }.to change { Synced::Timestamp.with_scope_and_model(account, LosRecord).last_synced_at }.from(first_sync_time).to(second_sync_time)
@@ -101,7 +101,7 @@ describe Synced::Strategies::UpdatedSince do
           future_sync_time = Time.zone.now.round + 1.hour
           expect(account.api).to receive(:paginate).with("los_records", hash_including(updated_since: nil)).and_return([])
           expect(account.api).to receive(:pagination_first_response)
-              .and_return(double({ headers: { "x-updated-since-request-synced-at" => future_sync_time.to_s } }))
+              .and_return(double({ headers: { "x-updated-since-request-synced-at" => future_sync_time.to_s } })).twice
           expect {
             account.los_records.synchronize
           }.to change { Synced::Timestamp.with_scope_and_model(account, LosRecord).last_synced_at }.from(nil).to(future_sync_time)
@@ -115,7 +115,7 @@ describe Synced::Strategies::UpdatedSince do
       it "raises MissingTimestampError" do
         expect(account.api).to receive(:paginate).with("bookings", hash_including(updated_since: nil)).and_return([])
         expect(account.api).to receive(:pagination_first_response)
-              .and_return(double({ headers: { } }))
+              .and_return(double({ headers: { } })).twice
         expect {
           Booking.synchronize(scope: account, query_params: {})
         }.to raise_error(Synced::Strategies::UpdatedSince::MissingTimestampError) { |ex|
@@ -127,12 +127,11 @@ describe Synced::Strategies::UpdatedSince do
       it "prevents from syncing records" do
         expect(account.api).to receive(:paginate).with("bookings", hash_including(updated_since: nil)).and_return(remote_objects)
         expect(account.api).to receive(:pagination_first_response)
-              .and_return(double({ headers: { } }))
+              .and_return(double({ headers: { } })).twice
         expect {
-          begin
+          expect {
             Booking.synchronize(scope: account, query_params: {})
-          rescue Synced::Strategies::UpdatedSince::MissingTimestampError
-          end
+          }.to raise_error(Synced::Strategies::UpdatedSince::MissingTimestampError)
         }.not_to change { Booking.count }
       end
     end

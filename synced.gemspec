@@ -18,7 +18,7 @@ Gem::Specification.new do |s|
   s.test_files = Dir["span/**/*"]
 
   s.add_dependency "rails", ">= 4.0.0"
-  s.add_dependency "bookingsync-api", ">= 0.1.3"
+  s.add_dependency "bookingsync-api", ">= 0.1.4"
   s.add_dependency "hashie"
 
   s.add_development_dependency "sqlite3"

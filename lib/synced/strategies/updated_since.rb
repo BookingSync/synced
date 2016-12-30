@@ -16,11 +16,8 @@ module Synced
       end
 
       def perform
-        raise MissingTimestampError.new unless first_request_timestamp
         super.tap do |local_objects|
           instrument("update_synced_timestamp_perform.synced", model: @model_class) do
-            # TODO: it can't be Time.now. this value has to be fetched from the API as well
-            # https://github.com/BookingSync/synced/issues/29
             @timestamp_strategy.update(first_request_timestamp)
           end
         end
@@ -62,18 +59,22 @@ module Synced
       end
 
       def meta
-        remote_objects
-        @meta ||= api.last_response.meta
+        @meta ||=
+          (api.last_response && api.last_response.meta) || {}
       end
 
       def first_response_headers
-        remote_objects
-        @first_response_headers ||= api.pagination_first_response.headers
+        @first_response_headers ||=
+          (api.pagination_first_response && api.pagination_first_response.headers) || {}
       end
 
       # Remove all objects with ids from deleted_ids field in the meta key
       def remove_relation
         relation_scope.where(@id_key => deleted_remote_objects_ids)
+      end
+
+      def additional_errors_check
+        raise MissingTimestampError.new unless first_request_timestamp
       end
 
       class CannotDeleteDueToNoDeletedIdsError < StandardError

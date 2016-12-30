@@ -212,8 +212,8 @@ describe Synced::Strategies::Full do
       end
 
       it "deletes local objects within scope" do
-        Rental.create(name: "will survive")
-        account.rentals.create
+        Rental.create(name: "will survive", synced_id: 43)
+        account.rentals.create(synced_id: 42)
         expect {
           Rental.synchronize(remote: [], scope: account,
             remove: true)
@@ -228,7 +228,7 @@ describe Synced::Strategies::Full do
       end
 
       it "ignores the model default scope" do
-        rental = Rental.create
+        rental = Rental.create(synced_id: 43)
         rental.periods.create(start_date: '2014-09-09', end_date: '2014-09-10')
         rental.periods.create(start_date: '2014-09-10', end_date: '2014-09-13')
 
@@ -366,13 +366,12 @@ describe Synced::Strategies::Full do
 
     context "without remote: option (makes API request(s))" do
       before do
-        allow_any_instance_of(BookingSync::API::Client).to receive(:paginate)
-          .and_return(remote_objects)
+        allow_any_instance_of(BookingSync::API::Client).to receive(:paginate).and_yield(remote_objects)
       end
 
       it "makes an api request" do
         expect(account.api).to receive(:paginate).with("rentals",
-          { auto_paginate: true }).and_return(remote_objects)
+          { per_page: 50 }).and_yield(remote_objects)
         expect {
           Rental.synchronize(scope: account)
         }.to change { account.rentals.count }.by(1)
@@ -380,7 +379,7 @@ describe Synced::Strategies::Full do
 
       it "makes an api request with auto_paginate enabled" do
         expect(account.api).to receive(:paginate).with("rentals",
-          { auto_paginate: true }).and_return(remote_objects)
+          { per_page: 50 }).and_yield(remote_objects)
         Rental.synchronize(scope: account)
       end
 
@@ -396,7 +395,7 @@ describe Synced::Strategies::Full do
           .with("bookings", { auto_paginate: true, from: from, updated_since: nil })
           .and_return(remote_objects)
         expect(account.api).to receive(:pagination_first_response)
-              .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } }))
+              .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } })).twice
         Booking.synchronize(scope: account, query_params: { from: from })
       end
 
@@ -409,9 +408,9 @@ describe Synced::Strategies::Full do
           expect(account.api).to receive(:paginate).with("bookings",
           { auto_paginate: true, updated_since: nil }).and_return(remote_objects)
           expect(account.api).to receive(:last_response)
-            .and_return(double({ meta: { deleted_ids: [] } }))
+            .and_return(double({ meta: { deleted_ids: [] } })).twice
           expect(account.api).to receive(:pagination_first_response)
-              .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.round.to_s } }))
+              .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.round.to_s } })).twice
           expect {
             Booking.synchronize(scope: account, remove: true, query_params: {})
           }.to change { account.bookings.count }.by(1)
@@ -438,7 +437,7 @@ describe Synced::Strategies::Full do
         end
 
         it "synchronizes parent model and its associations" do
-          allow(Location.api).to receive(:paginate).and_return(remote_objects)
+          allow(api).to receive(:paginate).and_return(remote_objects)
           expect {
             expect {
               Location.synchronize
@@ -553,7 +552,7 @@ describe Synced::Strategies::Full do
             .with("bookings", { updated_since: Time.zone.parse("2010-01-01 12:12:12"),
               auto_paginate: true }).and_return(remote_objects)
           expect(account.api).to receive(:pagination_first_response)
-              .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } }))
+              .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.round.to_s } })).twice
           Booking.synchronize(scope: account, query_params: {})
         end
 
@@ -576,7 +575,7 @@ describe Synced::Strategies::Full do
       end
 
       context "when initial_sync_since given" do
-        let(:rental) { Rental.create(name: "test") }
+        let(:rental) { Rental.create(name: "test", synced_id: 43) }
         let(:api) { double }
 
         context "and there are no objects with higher synced_all_at time" do
@@ -585,7 +584,7 @@ describe Synced::Strategies::Full do
               updated_since: Time.parse("2009-04-19 14:44:32"),
               auto_paginate: true }).and_return([])
             expect(rental.api).to receive(:pagination_first_response)
-              .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } }))
+              .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } })).twice
             Period.synchronize(scope: rental)
           end
         end
@@ -593,14 +592,14 @@ describe Synced::Strategies::Full do
 
         context "and there are objects with higher synced_all_at time" do
           let!(:period) { Period.create(rental: rental,
-            synced_all_at: Time.parse("2014-01-01 03:05:06")) }
+            synced_all_at: Time.zone.parse("2014-01-01 03:05:06")) }
 
           it "makes request to the API with minimum synced_all_at time" do
             expect(rental.api).to receive(:paginate).with("periods", {
-              updated_since: Time.parse("2014-01-01 03:05:06"),
+              updated_since: Time.zone.parse("2014-01-01 03:05:06"),
               auto_paginate: true }).and_return([])
             expect(rental.api).to receive(:pagination_first_response)
-              .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } }))
+              .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } })).twice
             Period.synchronize(scope: rental)
           end
         end
@@ -613,7 +612,7 @@ describe Synced::Strategies::Full do
               include: [:comments, :reviews] })
             .and_return(remote_objects)
           expect(account.api).to receive(:pagination_first_response)
-              .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.round.to_s } }))
+              .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.round.to_s } })).twice
           Booking.synchronize(scope: account, include: [:comments, :reviews], query_params: {})
           expect(Booking.where(synced_all_at: request_timestamp.round).count).to eq(Booking.count)
         end
@@ -643,9 +642,9 @@ describe Synced::Strategies::Full do
 
         it "passes include to the API request" do
           expect(api).to receive(:paginate)
-            .with("clients", { auto_paginate: true,
+            .with("clients", { per_page: 50,
               include: [:addresses], fields: [:name] })
-            .and_return(remote_objects)
+            .and_yield(remote_objects)
           Client.synchronize
         end
 
@@ -664,9 +663,9 @@ describe Synced::Strategies::Full do
         context "and include provided in the synchronize method" do
           it "overwrites include from the model" do
             expect(api).to receive(:paginate)
-            .with("clients", { auto_paginate: true,
+            .with("clients", { per_page: 50,
               include: [:photos], fields: [:name] })
-            .and_return(remote_objects)
+            .and_yield(remote_objects)
             Client.synchronize(include: [:photos])
           end
         end
@@ -680,19 +679,127 @@ describe Synced::Strategies::Full do
 
       it "adds fields to the API request" do
         expect(Client.api).to receive(:paginate)
-          .with("clients", { auto_paginate: true,
+          .with("clients", { per_page: 50,
             include: [:addresses], fields: [:name] })
-          .and_return(remote_objects)
+          .and_yield(remote_objects)
         Client.synchronize
       end
 
       context "and fields provided in the synchronize method" do
         it "overwrites include from the model" do
           expect(Client.api).to receive(:paginate)
-            .with("clients", { auto_paginate: true,
+            .with("clients", { per_page: 50,
               include: [:addresses], fields: [:phone, :type] })
-            .and_return(remote_objects)
+            .and_yield(remote_objects)
           Client.synchronize(fields: [:phone, :type])
+        end
+      end
+    end
+
+    context "pagination with block transaction" do
+      let(:remote_objects_batch1) { [remote_object(id: 42, name: "Remote1")] }
+      let(:remote_objects_batch2) { [remote_object(id: 43, name: "Remote2"), remote_object(id: 44, name: "Remote3")] }
+      let(:remote_objects_batch3) { [remote_object(id: 45, name: "Remote4")] }
+
+      before do
+        allow_any_instance_of(BookingSync::API::Client).to receive(:paginate)
+          .and_yield(remote_objects_batch1)
+          .and_yield(remote_objects_batch2)
+          .and_yield(remote_objects_batch3)
+      end
+
+      context "all blocks have valid entries" do
+        it "persists all entries" do
+          expect {
+            Rental.synchronize(scope: account, remove: true)
+          }.to change { account.rentals.count }.by(4)
+          expect(Rental.pluck(:synced_id)).to eq [42, 43, 44, 45]
+        end
+
+        it "caches all valid ids, and removes outdated records" do
+          account.rentals.create(synced_id: 4)
+          expect {
+            Rental.synchronize(scope: account, remove: true)
+          }.to change { account.rentals.count }.by(3)
+          expect(Rental.pluck(:synced_id)).to eq [42, 43, 44, 45]
+        end
+      end
+
+      context "error thrown in one of blocks" do
+        let(:remote_objects_batch2) { [remote_object(id: 43, name: "Remote2"), remote_object(name: "Remote3")] }
+
+        it "doesn't save any entry" do
+          expect {
+            expect {
+              Rental.synchronize(scope: account)
+            }.to raise_error(ActiveRecord::RecordInvalid)
+          }.not_to change { account.rentals.count }
+        end
+      end
+    end
+
+    context "with handle_processed_objects_proc option" do
+      context "and pagination with blocks" do
+        let(:remote_objects_batch1) { [remote_object(id: 42, name: "Remote1")] }
+        let(:remote_objects_batch2) { [remote_object(id: 45, name: "Remote4")] }
+
+        before do
+          allow_any_instance_of(BookingSync::API::Client).to receive(:paginate)
+            .and_yield(remote_objects_batch1)
+            .and_yield(remote_objects_batch2)
+        end
+
+        it "calls proc on every batch" do
+          Rental.synchronize(scope: account)
+          expect(Rental.pluck(:name)).to match_array ["Remote1_modified", "Remote4_modified"]
+        end
+      end
+
+      context "and auto_paginate" do
+        let(:remote_objects) { [remote_object(id: 42, name: "Remote1"), remote_object(id: 45, name: "Remote4")] }
+
+        before do
+          allow_any_instance_of(BookingSync::API::Client).to receive(:paginate)
+            .and_return(remote_objects)
+        end
+
+        it "calls proc on all records" do
+          Rental.synchronize(scope: account, auto_paginate: true)
+          expect(Rental.pluck(:name)).to match_array ["Remote1_modified", "Remote4_modified"]
+        end
+      end
+    end
+
+    describe "returned value" do
+      context "with auto_paginate" do
+        let(:remote_objects) { [remote_object(id: 42, name: "Remote1"), remote_object(id: 45, name: "Remote2")] }
+
+        before do
+          allow_any_instance_of(BookingSync::API::Client).to receive(:paginate)
+            .and_return(remote_objects)
+        end
+
+        it "returns all processed objects" do
+          expect(
+            Rental.synchronize(scope: account, auto_paginate: true).map(&:synced_id)
+          ).to eq [42, 45]
+        end
+      end
+
+      context "with pagintaion with block" do
+        let(:remote_objects_batch1) { [remote_object(id: 42, name: "Remote1")] }
+        let(:remote_objects_batch2) { [remote_object(id: 45, name: "Remote4")] }
+
+        before do
+          allow_any_instance_of(BookingSync::API::Client).to receive(:paginate)
+            .and_yield(remote_objects_batch1)
+            .and_yield(remote_objects_batch2)
+        end
+
+        it "returns processed objects only from last batch" do
+          expect(
+            Rental.synchronize(scope: account).map(&:synced_id)
+          ).to eq [45]
         end
       end
     end

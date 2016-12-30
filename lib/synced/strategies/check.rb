@@ -19,24 +19,32 @@ module Synced
       #      ActiveRecord::Model #changes hash is returned - changed objects
       # @return [Synced::Strategies::Check::Result] Integrity check result
       def perform
+        process_remote_objects(remote_objects_tester)
         result.additional = remove_relation.to_a
-        remote_objects.map do |remote|
-          if local_object = local_object_by_remote_id(remote.id)
-            remote.extend(@mapper) if @mapper
-            local_object.attributes = default_attributes_mapping(remote)
-            local_object.attributes = local_attributes_mapping(remote)
-            if @globalized_attributes.present?
-              local_object.attributes = globalized_attributes_mapping(remote,
-                local_object.translations.translated_locales)
+        result
+      end
+
+      def remote_objects_tester
+        lambda do |remote_objects|
+          @remote_objects_ids.concat(remote_objects.map(&:id))
+
+          remote_objects.map do |remote|
+            if local_object = local_object_by_remote_id(remote.id)
+              remote.extend(@mapper) if @mapper
+              local_object.attributes = default_attributes_mapping(remote)
+              local_object.attributes = local_attributes_mapping(remote)
+              if @globalized_attributes.present?
+                local_object.attributes = globalized_attributes_mapping(remote,
+                  local_object.translations.translated_locales)
+              end
+              if local_object.changed?
+                result.changed << [{ id: local_object.id }, local_object.changes]
+              end
+            else
+              result.missing << remote
             end
-            if local_object.changed?
-              result.changed << [{ id: local_object.id }, local_object.changes]
-            end
-          else
-            result.missing << remote
           end
         end
-        result
       end
 
       # If we check model which uses cancel instead of destroy, we skip canceled
