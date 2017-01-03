@@ -1,4 +1,6 @@
 ## master
+  * [feature] Allow to choose method of fetching data (with auto_paginate or in batches). Fetching in batches should reduce memory usage. Defaults to auto_paginate, hence no changes required after update.
+  * [improvement] Update bookingsync-api gem to 0.1.4
 
 ## 1.4.0
   * [bugfix] For paginated updated_since syncs use the timestamp from the first page. This should prevent any data loss during updated_since synchronization, fixing inconsistencies in the next sync.

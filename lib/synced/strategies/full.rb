@@ -42,6 +42,8 @@ module Synced
       #   mapping remote objects attributes into local object attributes
       # @option options [Array|Hash] globalized_attributes: A list of attributes
       #   which will be mapped with their translations.
+      # @option options [Boolean] auto_paginate: If true (default) will fetch and save all
+      #   records at once. If false will fetch and save records in batches.
       def initialize(model_class, options = {})
         @model_class           = model_class
         @scope                 = options[:scope]

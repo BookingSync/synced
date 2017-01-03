@@ -76,6 +76,43 @@ rental = account.rentals.first
 rental.synced_data.bedrooms # => 4
 rental.synced_data.rental_type # => "villa"
 ```
+## Fetching data
+
+You can choose between two ways of [fetching remote data](https://github.com/BookingSync/bookingsync-api#pagination):
+1. `auto_paginate` - default strategy, which fetches and persists all data at once. This strategy ensures that resources are fetched as quickly as possible, therefore minimizing risk of data changes during request. However, this way may become cumbersome when working with large data-sets (high memory usage).
+2. `pagination with block` -  fetches and persists records in batches. Especially helpful, when dealing with large data-sets. Increases overall syncing time, but significantly reduces memory usage. Number of entries per page can be customized by `:per_page` attribute inside `:query_params`
+
+In order to switch to `pagination with block`, you just need to use `auto_paginate: false`:
+```ruby
+class Rental
+  synced auto_paginate: false, query_params: { per_page: 50 }
+end
+```
+### Persisted objects
+
+There is another major difference between `auto_paginate` and `pagination with block` - when using `auto_paginate`, `.synchronize` returns collection of all **persisted** records. On the other hand, `pagination with block` returns last batch of **fetched** resources.
+If you need to process persisted data we encourage you to use `handle_processed_objects_proc`. This proc  takes one argument (persisted records) and is called after persisting each batch of remote objects. So when using `auto_paginate`, this:
+
+```ruby
+class Rental
+  synced handle_processed_objects_proc: Proc.new { |persisted_rentals|
+      persisted_rentals.each { |rental| rental.do_stuff }
+    }
+end
+```
+would be an equivalent of overriding `.synchronize`:
+```ruby
+class Rental
+  synced
+
+  def self.synchronize(options)
+    super.tap do |persisted_rentals|
+      persisted_rentals.each { |rental| rental.do_stuff }
+    end
+  end
+end
+```
+**When using `pagination with block` only the former will work.**
 
 ## Synced strategies
 
@@ -438,7 +475,9 @@ Option name          | Default value    | Description                           
 `:include`           | `[]`             | [An array of associations to be fetched](#including-associations-in-synced_data)  | YES    | YES         |
 `:fields`            | `[]`             | [An array of fields to be fetched](#selecting-fields-to-be-synchronized)          | YES    | YES         |
 `:remote`            | `nil`            | [Remote objects to be synchronized with local ones](#synchronization-of-given-remote-objects) | NO | YES |
-`:delegate_attributes`| `[]`            | [Define delegators to synced data Hash attributes](#delegate-attributes) | YES | NO |
+`:delegate_attributes`| `[]`            | [Define delegators to synced data Hash attributes](#delegate-attributes)          | YES    | NO |
+`:auto_paginate`     | `true`           | [Whether data should be fetched in batches or as one response](#fetching-methods)                 | YES    | YES |
+`:handle_processed_objects_proc` | `nil` | [Custom proc taking persisted remote objects, called after persisting batch of data](#persisted-objects)   | YES    | NO |
 
 ## Documentation
 
