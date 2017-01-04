@@ -547,7 +547,7 @@ describe Synced::Strategies::Full do
 
         it "makes request to the api with oldest synced_all_at" do
           expect(account.api).to receive(:paginate)
-            .with("bookings", { updated_since: "2010-01-01 12:12:12",
+            .with("bookings", { updated_since: Time.zone.parse("2010-01-01 12:12:12"),
               auto_paginate: true }).and_return(remote_objects)
           expect(account.api).to receive(:pagination_first_response)
               .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } }))
