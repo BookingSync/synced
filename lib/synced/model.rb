@@ -38,11 +38,11 @@ module Synced
     def synced(strategy: :updated_since, **options)
       options.assert_valid_keys(:associations, :data_key, :fields,
         :globalized_attributes, :id_key, :include, :initial_sync_since,
-        :local_attributes, :mapper, :only_updated, :remove,
+        :local_attributes, :mapper, :only_updated, :remove, :auto_paginate,
         :delegate_attributes, :query_params, :timestamp_strategy)
       class_attribute :synced_id_key, :synced_data_key,
         :synced_local_attributes, :synced_associations, :synced_only_updated,
-        :synced_mapper, :synced_remove, :synced_include, :synced_fields,
+        :synced_mapper, :synced_remove, :synced_include, :synced_fields, :synced_auto_paginate,
         :synced_globalized_attributes, :synced_initial_sync_since, :synced_delegate_attributes,
         :synced_query_params, :synced_timestamp_strategy, :synced_strategy
       self.synced_strategy              = strategy
@@ -63,6 +63,7 @@ module Synced
       self.synced_delegate_attributes   = options.fetch(:delegate_attributes, [])
       self.synced_query_params          = options.fetch(:query_params, {})
       self.synced_timestamp_strategy    = options.fetch(:timestamp_strategy, nil)
+      self.synced_auto_paginate         = options.fetch(:auto_paginate, true)
       include Synced::DelegateAttributes
       include Synced::HasSyncedData
     end
@@ -97,11 +98,12 @@ module Synced
     #  website.rentals.synchronize(remote: remote_rentals)
     #
     def synchronize(scope: scope_from_relation, strategy: synced_strategy, **options)
-      options.assert_valid_keys(:api, :fields, :include, :remote, :remove, :query_params, :association_sync)
+      options.assert_valid_keys(:api, :fields, :include, :remote, :remove, :query_params, :association_sync, :auto_paginate)
       options[:remove]  = synced_remove unless options.has_key?(:remove)
       options[:include] = Array.wrap(synced_include) unless options.has_key?(:include)
       options[:fields]  = Array.wrap(synced_fields) unless options.has_key?(:fields)
       options[:query_params] = synced_query_params unless options.has_key?(:query_params)
+      options[:auto_paginate] = synced_auto_paginate unless options.has_key?(:auto_paginate)
       options.merge!({
         scope:                 scope,
         strategy:              strategy,

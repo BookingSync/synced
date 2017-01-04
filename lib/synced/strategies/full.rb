@@ -61,6 +61,7 @@ module Synced
         @remote_objects        = Array.wrap(options[:remote]) unless @perform_request
         @globalized_attributes = synced_attributes_as_hash(options[:globalized_attributes])
         @query_params         = options[:query_params]
+        @auto_paginate         = options[:auto_paginate]
       end
 
       def perform
@@ -183,7 +184,7 @@ module Synced
             options[:include] += @include
           end
           options[:fields] = @fields if @fields.present?
-          options[:auto_paginate] = true
+          options[:auto_paginate] = @auto_paginate
         end.merge(query_params)
       end
 

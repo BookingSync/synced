@@ -426,8 +426,11 @@ describe Synced::Strategies::Full do
             remote_object(id: 100, filename: 'b.jpg')])
         ] }
 
-        it "makes api request with include" do
+        before do
           allow(Location).to receive(:api).and_return(api)
+        end
+
+        it "makes api request with include" do
           expect(api).to receive(:paginate)
             .with("locations", { include: [:photos, :destination, :addresses], auto_paginate: true })
             .and_return(remote_objects)

@@ -65,7 +65,7 @@ describe Synced::Model do
           expect(error.message).to eq "Unknown key: :i_have_no_memory_of_this_place. " \
             + "Valid keys are: :associations, :data_key, :fields, :globalized_attributes, :id_key, " \
             + ":include, :initial_sync_since, :local_attributes, :mapper, :only_updated, :remove, " \
-            + ":delegate_attributes, :query_params, :timestamp_strategy"
+            + ":auto_paginate, :delegate_attributes, :query_params, :timestamp_strategy"
         }
       end
     end
@@ -85,8 +85,25 @@ describe Synced::Model do
           Rental.synchronize(i_have_no_memory_of_this_place: true)
         }.to raise_error { |error|
           expect(error.message).to eq "Unknown key: :i_have_no_memory_of_this_place. " \
-            + "Valid keys are: :api, :fields, :include, :remote, :remove, :query_params, :association_sync"
+            + "Valid keys are: :api, :fields, :include, :remote, :remove, :query_params, :association_sync, :auto_paginate"
         }
+      end
+    end
+
+    context "auto_paginate" do
+      let(:account) { Account.create(name: "test") }
+      let(:request_timestamp) { 1.year.ago }
+
+      it "uses auto_paginate from class-level declaration" do
+        expect(account.api).to receive(:paginate)
+          .with("rentals", { auto_paginate: true }).and_return([])
+        Rental.synchronize(scope: account)
+      end
+
+      it "overrides auto_paginate from class-level declaration" do
+        expect(account.api).to receive(:paginate)
+          .with("rentals", { auto_paginate: false }).and_return([])
+        Rental.synchronize(scope: account, auto_paginate: false)
       end
     end
 
