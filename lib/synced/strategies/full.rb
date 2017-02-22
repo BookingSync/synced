@@ -62,30 +62,20 @@ module Synced
         @globalized_attributes = synced_attributes_as_hash(options[:globalized_attributes])
         @query_params         = options[:query_params]
         @auto_paginate         = options[:auto_paginate]
+        @handle_processed_objects_proc = options[:handle_processed_objects_proc]
+        @remote_objects_ids = []
       end
 
       def perform
         instrument("perform.synced", model: @model_class) do
           relation_scope.transaction do
+            processed_objects = instrument("sync_perform.synced", model: @model_class) do
+              process_remote_objects(remote_objects_persistor)
+            end
             instrument("remove_perform.synced", model: @model_class) do
               remove_relation.send(remove_strategy) if @remove
             end
-            instrument("sync_perform.synced", model: @model_class) do
-              remote_objects.map do |remote|
-                remote.extend(@mapper) if @mapper
-                local_object = local_object_by_remote_id(remote.id) || relation_scope.new
-                local_object.attributes = default_attributes_mapping(remote)
-                local_object.attributes = local_attributes_mapping(remote)
-                if @globalized_attributes.present?
-                  local_object.attributes = globalized_attributes_mapping(remote,
-                    local_object.translations.translated_locales)
-                end
-                local_object.save! if local_object.changed?
-                local_object.tap do |local_object|
-                  synchronize_associations(remote, local_object)
-                end
-              end
-            end
+            processed_objects
           end
         end
       end
@@ -95,6 +85,32 @@ module Synced
       end
 
       private
+
+      def remote_objects_persistor
+        lambda do |remote_objects|
+          additional_errors_check
+          @remote_objects_ids.concat(remote_objects.map(&:id))
+
+          processed_objects =
+            remote_objects.map do |remote|
+              remote.extend(@mapper) if @mapper
+              local_object = local_object_by_remote_id(remote.id) || relation_scope.new
+              local_object.attributes = default_attributes_mapping(remote)
+              local_object.attributes = local_attributes_mapping(remote)
+              if @globalized_attributes.present?
+                local_object.attributes = globalized_attributes_mapping(remote,
+                  local_object.translations.translated_locales)
+              end
+              local_object.save! if local_object.changed?
+              local_object.tap do |local_object|
+                synchronize_associations(remote, local_object)
+              end
+            end
+
+          @handle_processed_objects_proc.call(processed_objects) if @handle_processed_objects_proc.respond_to?(:call)
+          processed_objects
+        end
+      end
 
       def synchronize_associations(remote, local_object)
         @associations.each do |association|
@@ -159,20 +175,32 @@ module Synced
       end
 
       def local_objects
-        @local_objects ||= relation_scope.where(@id_key => remote_objects_ids).to_a
+        relation_scope.where(@id_key => remote_objects_ids).to_a
       end
 
       def remote_objects_ids
-        @remote_objects_ids ||= remote_objects.map(&:id)
+        @remote_objects_ids
       end
 
-      def remote_objects
-        @remote_objects ||= @perform_request ? fetch_remote_objects : nil
+      def process_remote_objects(processor)
+        if @remote_objects
+          processor.call(@remote_objects)
+        elsif @perform_request
+          fetch_and_save_remote_objects(processor)
+        else
+          nil
+        end
       end
 
-      def fetch_remote_objects
+      def fetch_and_save_remote_objects(processor)
         instrument("fetch_remote_objects.synced", model: @model_class) do
-          api.paginate(resource_name, api_request_options)
+          if @auto_paginate
+            processor.call(api.paginate(resource_name, api_request_options))
+          else
+            api.paginate(resource_name, api_request_options) do |batch|
+              processor.call(batch)
+            end
+          end
         end
       end
 
@@ -184,7 +212,7 @@ module Synced
             options[:include] += @include
           end
           options[:fields] = @fields if @fields.present?
-          options[:auto_paginate] = @auto_paginate
+          @auto_paginate ? options[:auto_paginate] = true : options[:per_page] = 50
         end.merge(query_params)
       end
 
@@ -222,6 +250,9 @@ module Synced
 
       def instrument(*args, &block)
         Synced.instrumenter.instrument(*args, &block)
+      end
+
+      def additional_errors_check
       end
 
       class MissingAPIClient < StandardError

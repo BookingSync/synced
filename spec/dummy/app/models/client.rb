@@ -10,7 +10,7 @@ class Client < ActiveRecord::Base
   end
 
   synced mapper: SyncedMapper, local_attributes: %w(first_name last_name),
-    include: :addresses, fields: [:name], strategy: :full
+    include: :addresses, fields: [:name], strategy: :full, auto_paginate: false
 
   def self.api
     BookingSync::API::Client.new("CREDENTIALS_FLOW_ACCESS_TOKEN")

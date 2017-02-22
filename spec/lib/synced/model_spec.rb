@@ -65,7 +65,7 @@ describe Synced::Model do
           expect(error.message).to eq "Unknown key: :i_have_no_memory_of_this_place. " \
             + "Valid keys are: :associations, :data_key, :fields, :globalized_attributes, :id_key, " \
             + ":include, :initial_sync_since, :local_attributes, :mapper, :only_updated, :remove, " \
-            + ":auto_paginate, :delegate_attributes, :query_params, :timestamp_strategy"
+            + ":auto_paginate, :delegate_attributes, :query_params, :timestamp_strategy, :handle_processed_objects_proc"
         }
       end
     end
@@ -96,14 +96,14 @@ describe Synced::Model do
 
       it "uses auto_paginate from class-level declaration" do
         expect(account.api).to receive(:paginate)
-          .with("rentals", { auto_paginate: true }).and_return([])
+          .with("rentals", { per_page: 50 }).and_yield([])
         Rental.synchronize(scope: account)
       end
 
       it "overrides auto_paginate from class-level declaration" do
         expect(account.api).to receive(:paginate)
-          .with("rentals", { auto_paginate: false }).and_return([])
-        Rental.synchronize(scope: account, auto_paginate: false)
+          .with("rentals", { auto_paginate: true }).and_return([])
+        Rental.synchronize(scope: account, auto_paginate: true)
       end
     end
 
@@ -117,7 +117,7 @@ describe Synced::Model do
           .with("bookings", { auto_paginate: true, from: account.import_bookings_since, updated_since: nil })
           .and_return([])
         expect(account.api).to receive(:pagination_first_response)
-              .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } }))
+              .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } })).twice
         Booking.synchronize(scope: account)
       end
 
@@ -128,7 +128,7 @@ describe Synced::Model do
           .with("bookings", { auto_paginate: true, from: from, updated_since: nil })
           .and_return([])
         expect(account.api).to receive(:pagination_first_response)
-              .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } }))
+              .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } })).twice
         Booking.synchronize(scope: account, query_params: { from: -> { from } })
       end
 
@@ -139,7 +139,7 @@ describe Synced::Model do
           .with("bookings", { auto_paginate: true, from: from, updated_since: nil })
           .and_return([])
         expect(account.api).to receive(:pagination_first_response)
-              .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } }))
+              .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } })).twice
         Booking.synchronize(scope: account, query_params: { from: from })
       end
     end
@@ -191,7 +191,7 @@ describe Synced::Model do
           { updated_since: nil, auto_paginate: true })
           .and_return(remote_bookings)
         expect(account.api).to receive(:pagination_first_response)
-              .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } }))
+              .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } })).twice
         Booking.synchronize(scope: account, query_params: {})
       end
 
