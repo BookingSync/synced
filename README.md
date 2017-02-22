@@ -346,6 +346,7 @@ Location.synchronize(remote: remote_locations)
 ```
 
 NOTE: Partial updates are disabled when providing remote objects.
+**WARNING:** When using `remove: true` with `remote`, remember that synced will remove **ALL** records that are not passed to `remote`.
 
 ## Removing local objects
 
@@ -418,6 +419,7 @@ If you want to access synced attribute with different name, you can pass a Hash:
 class Photo < ActiveRecord::Base
   synced delegate_attributes: {title: :name}
 end
+```
 
 keys are delegated attributes' names and values are keys on synced data Hash. This is a simpler
 version of `delegate :name, to: :synced_data` which works with Hash reserved attributes names, like
