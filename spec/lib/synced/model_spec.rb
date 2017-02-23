@@ -96,7 +96,7 @@ describe Synced::Model do
 
       it "uses auto_paginate from class-level declaration" do
         expect(account.api).to receive(:paginate)
-          .with("rentals", { per_page: 50 }).and_yield([])
+          .with("rentals", { auto_paginate: false }).and_yield([])
         Rental.synchronize(scope: account)
       end
 
