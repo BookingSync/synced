@@ -212,7 +212,7 @@ module Synced
             options[:include] += @include
           end
           options[:fields] = @fields if @fields.present?
-          @auto_paginate ? options[:auto_paginate] = true : options[:per_page] = 50
+          options[:auto_paginate] = @auto_paginate
         end.merge(query_params)
       end
 

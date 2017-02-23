@@ -371,7 +371,7 @@ describe Synced::Strategies::Full do
 
       it "makes an api request" do
         expect(account.api).to receive(:paginate).with("rentals",
-          { per_page: 50 }).and_yield(remote_objects)
+          { auto_paginate: false }).and_yield(remote_objects)
         expect {
           Rental.synchronize(scope: account)
         }.to change { account.rentals.count }.by(1)
@@ -379,7 +379,7 @@ describe Synced::Strategies::Full do
 
       it "makes an api request with auto_paginate enabled" do
         expect(account.api).to receive(:paginate).with("rentals",
-          { per_page: 50 }).and_yield(remote_objects)
+          { auto_paginate: false }).and_yield(remote_objects)
         Rental.synchronize(scope: account)
       end
 
@@ -642,7 +642,7 @@ describe Synced::Strategies::Full do
 
         it "passes include to the API request" do
           expect(api).to receive(:paginate)
-            .with("clients", { per_page: 50,
+            .with("clients", { auto_paginate: false,
               include: [:addresses], fields: [:name] })
             .and_yield(remote_objects)
           Client.synchronize
@@ -663,7 +663,7 @@ describe Synced::Strategies::Full do
         context "and include provided in the synchronize method" do
           it "overwrites include from the model" do
             expect(api).to receive(:paginate)
-            .with("clients", { per_page: 50,
+            .with("clients", { auto_paginate: false,
               include: [:photos], fields: [:name] })
             .and_yield(remote_objects)
             Client.synchronize(include: [:photos])
@@ -679,7 +679,7 @@ describe Synced::Strategies::Full do
 
       it "adds fields to the API request" do
         expect(Client.api).to receive(:paginate)
-          .with("clients", { per_page: 50,
+          .with("clients", { auto_paginate: false,
             include: [:addresses], fields: [:name] })
           .and_yield(remote_objects)
         Client.synchronize
@@ -688,7 +688,7 @@ describe Synced::Strategies::Full do
       context "and fields provided in the synchronize method" do
         it "overwrites include from the model" do
           expect(Client.api).to receive(:paginate)
-            .with("clients", { per_page: 50,
+            .with("clients", { auto_paginate: false,
               include: [:addresses], fields: [:phone, :type] })
             .and_yield(remote_objects)
           Client.synchronize(fields: [:phone, :type])
