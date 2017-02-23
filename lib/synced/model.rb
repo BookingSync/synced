@@ -35,6 +35,11 @@ module Synced
     #   on synchronized object and delegated to synced_data Hash
     # @option options [Hash] query_params: Given attributes and their values
     #   which will be passed to api client to perform search
+    # @option options [Boolean] auto_paginate: If true (default) will fetch and save all
+    #   records at once. If false will fetch and save records in batches.
+    # @option options [Proc] handle_processed_objects_proc: Proc taking one argument (persisted remote objects).
+    #   Called after persisting remote objects (once in case of auto_paginate, after each batch
+    #   when paginating with block).
     def synced(strategy: :updated_since, **options)
       options.assert_valid_keys(:associations, :data_key, :fields,
         :globalized_attributes, :id_key, :include, :initial_sync_since,
@@ -86,6 +91,8 @@ module Synced
     #   You can also force method to remove local objects by passing it
     #   to remove: :mark_as_missing. This option can be defined in the model
     #   and then overwritten in the synchronize method.
+    # @param auto_paginate [Boolean] - If true (default) will fetch and save all
+    #   records at once. If false will fetch and save records in batches.
     # @param api [BookingSync::API::Client] - API client to be used for fetching
     #   remote objects
     # @example Synchronizing amenities
