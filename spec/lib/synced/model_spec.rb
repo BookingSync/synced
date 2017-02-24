@@ -123,7 +123,7 @@ describe Synced::Model do
 
       it "overrides query_params from class-level declaration accepting lambdas with arity 0 and passes value to api" do
         account = Account.create(name: "test")
-        from = Time.parse("2010-01-01 12:00:00")
+        from = Time.zone.parse("2010-01-01 12:00:00")
         expect(account.api).to receive(:paginate)
           .with("bookings", { auto_paginate: true, from: from, updated_since: nil })
           .and_return([])
@@ -134,7 +134,7 @@ describe Synced::Model do
 
       it "overrides query_params from class-level declaration accepting raw values and passes value to api" do
         account = Account.create(name: "test")
-        from = Time.parse("2010-01-01 12:00:00")
+        from = Time.zone.parse("2010-01-01 12:00:00")
         expect(account.api).to receive(:paginate)
           .with("bookings", { auto_paginate: true, from: from, updated_since: nil })
           .and_return([])

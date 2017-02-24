@@ -1,7 +1,11 @@
 language: ruby
+before_install:
+  - gem install bundler -v 1.13.6
+  - gem update bundler
 rvm:
   - "2.1"
   - "2.2"
-before_install:
-  - gem install bundler -v 1.13.6
-  
+gemfile:
+  - gemfiles/rails_4.1.gemfile
+  - gemfiles/rails_4.2.gemfile
+script: "bundle exec rake spec"
