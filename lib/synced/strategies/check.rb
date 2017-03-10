@@ -27,9 +27,12 @@ module Synced
       def remote_objects_tester
         lambda do |remote_objects|
           @remote_objects_ids.concat(remote_objects.map(&:id))
+          local_objects_hash = relation_scope.where(@id_key => remote_objects.map(&:id)).each_with_object({}) do |local_object, hash|
+            hash[local_object.public_send(@id_key)] = local_object
+          end
 
           remote_objects.map do |remote|
-            if local_object = local_object_by_remote_id(remote.id)
+            if local_object = local_objects_hash[remote.id]
               remote.extend(@mapper) if @mapper
               local_object.attributes = default_attributes_mapping(remote)
               local_object.attributes = local_attributes_mapping(remote)
