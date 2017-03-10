@@ -1,4 +1,7 @@
 ## master
+
+## 1.5.2
+  * [bugfix] Fix n + 1 querry problems
   * [feature] Allow to choose method of fetching data (with auto_paginate or in batches). Fetching in batches should reduce memory usage. Defaults to auto_paginate, hence no changes required after update.
   * [improvement] Update bookingsync-api gem to 0.1.4
 
