@@ -92,7 +92,8 @@ module Synced
         lambda do |remote_objects|
           additional_errors_check
           @remote_objects_ids.concat(remote_objects.map(&:id))
-          local_objects_hash = relation_scope.where(@id_key => remote_objects.map(&:id)).each_with_object({}) do |local_object, hash|
+          local_objects = relation_scope.where(@id_key => remote_objects.map(&:id))
+          local_objects_hash = local_objects.each_with_object({}) do |local_object, hash|
             hash[local_object.public_send(@id_key)] = local_object
           end
 
