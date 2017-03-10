@@ -89,16 +89,17 @@ module Synced
       private
 
       def remote_objects_persistor
-        lambda do |remote_objects|
+        lambda do |remote_objects_batch|
           additional_errors_check
-          @remote_objects_ids.concat(remote_objects.map(&:id))
-          local_objects = relation_scope.where(@id_key => remote_objects.map(&:id))
+          remote_objects_batch_ids = remote_objects_batch.map(&:id)
+          local_objects = relation_scope.where(@id_key => remote_objects_batch_ids)
           local_objects_hash = local_objects.each_with_object({}) do |local_object, hash|
             hash[local_object.public_send(@id_key)] = local_object
           end
+          @remote_objects_ids.concat(remote_objects_batch_ids)
 
           processed_objects =
-            remote_objects.map do |remote|
+            remote_objects_batch.map do |remote|
               remote.extend(@mapper) if @mapper
               local_object = local_objects_hash[remote.id] || relation_scope.new
               local_object.attributes = default_attributes_mapping(remote)
