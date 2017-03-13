@@ -64,7 +64,7 @@ module Synced
       self.synced_globalized_attributes = options.fetch(:globalized_attributes,
         [])
       self.synced_initial_sync_since    = options.fetch(:initial_sync_since,
-        nil)
+        true)
       self.synced_delegate_attributes   = options.fetch(:delegate_attributes, [])
       self.synced_query_params          = options.fetch(:query_params, {})
       self.synced_timestamp_strategy    = options.fetch(:timestamp_strategy, nil)
