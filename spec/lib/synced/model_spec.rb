@@ -65,7 +65,7 @@ describe Synced::Model do
           expect(error.message).to eq "Unknown key: :i_have_no_memory_of_this_place. " \
             + "Valid keys are: :associations, :data_key, :fields, :globalized_attributes, :id_key, " \
             + ":include, :initial_sync_since, :local_attributes, :mapper, :only_updated, :remove, " \
-            + ":auto_paginate, :delegate_attributes, :query_params, :timestamp_strategy, :handle_processed_objects_proc"
+            + ":auto_paginate, :transaction_per_page, :delegate_attributes, :query_params, :timestamp_strategy, :handle_processed_objects_proc"
         }
       end
     end
@@ -85,7 +85,7 @@ describe Synced::Model do
           Rental.synchronize(i_have_no_memory_of_this_place: true)
         }.to raise_error { |error|
           expect(error.message).to eq "Unknown key: :i_have_no_memory_of_this_place. " \
-            + "Valid keys are: :api, :fields, :include, :remote, :remove, :query_params, :association_sync, :auto_paginate"
+            + "Valid keys are: :api, :fields, :include, :remote, :remove, :query_params, :association_sync, :auto_paginate, :transaction_per_page"
         }
       end
     end
@@ -104,6 +104,40 @@ describe Synced::Model do
         expect(account.api).to receive(:paginate)
           .with("rentals", { auto_paginate: true }).and_return([])
         Rental.synchronize(scope: account, auto_paginate: true)
+      end
+    end
+
+    context "transaction_per_page" do
+      let(:account) { Account.create(name: "test") }
+
+      around do |example|
+        LosRecord.instance_eval do
+          synced strategy: :updated_since,
+                 timestamp_strategy: Synced::Strategies::SyncedPerScopeTimestampStrategy,
+                 transaction_per_page: true
+        end
+
+        LosRecordsSyncSetupHelper.with_multipage_sync_crashing_on_second_page do
+          example.run
+        end
+      end
+
+      it "uses transaction_per_page from class-level declaration" do
+        expect {
+          begin
+            LosRecord.synchronize(scope: account, strategy: :full)
+          rescue ActiveRecord::RecordInvalid
+          end
+        }.to change { LosRecord.count }
+      end
+
+      it "overrides transaction_per_page from class-level declaration" do
+        expect {
+          begin
+            LosRecord.synchronize(scope: account, strategy: :full, transaction_per_page: false)
+          rescue ActiveRecord::RecordInvalid
+          end
+        }.not_to change { LosRecord.count }
       end
     end
 

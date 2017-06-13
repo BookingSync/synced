@@ -462,6 +462,22 @@ keys are delegated attributes' names and values are keys on synced data Hash. Th
 version of `delegate :name, to: :synced_data` which works with Hash reserved attributes names, like
 `:zip`, `:map`.
 
+## Persisting fetched objects
+
+By default all fetched objects are persisted inside one big transaction. You can customize this behaviour by providing `transaction_per_page` option either in model configuration:
+
+```ruby
+class Photo < ActiveRecord::Base
+  synced transaction_per_page: true
+end
+```
+
+Or as a param in `synchronize` method:
+
+```
+Photo.synchronize(transaction_per_page: true)
+```
+
 ## Synced configuration options
 
 Option name          | Default value    | Description                                                                       | synced | synchronize |
@@ -477,6 +493,7 @@ Option name          | Default value    | Description                           
 `:remote`            | `nil`            | [Remote objects to be synchronized with local ones](#synchronization-of-given-remote-objects) | NO | YES |
 `:delegate_attributes`| `[]`            | [Define delegators to synced data Hash attributes](#delegate-attributes)          | YES    | NO |
 `:auto_paginate`     | `true`           | [Whether data should be fetched in batches or as one response](#fetching-methods)                 | YES    | YES |
+`:transaction_per_page` | `false`           | [Whether transaction should be per page of fetched objects or for all the pages](#persisting-fetched-objects)                 | YES    | YES |
 `:handle_processed_objects_proc` | `nil` | [Custom proc taking persisted remote objects, called after persisting batch of data](#persisted-objects)   | YES    | NO |
 
 ## Documentation
