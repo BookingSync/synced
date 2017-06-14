@@ -141,6 +141,10 @@ describe Synced::Strategies::Full do
         end
 
         describe "without provided :transaction_per_page" do
+          before do
+            LosRecord.synced_transaction_per_page = nil
+          end
+
           it "does not persist objects on any page if something fails" do
             expect {
               begin

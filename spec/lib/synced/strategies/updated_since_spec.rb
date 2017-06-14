@@ -141,13 +141,15 @@ describe Synced::Strategies::UpdatedSince do
         around do |example|
           cassette = "synchronize_los_records_updated_since"
 
-          LosRecord.instance_eval do
-            synced strategy: :updated_since, timestamp_strategy: Synced::Strategies::SyncedPerScopeTimestampStrategy
-          end
+          synced_timestamp_strategy_was = LosRecord.synced_timestamp_strategy
+
+          LosRecord.synced_timestamp_strategy = Synced::Strategies::SyncedPerScopeTimestampStrategy
 
           LosRecordsSyncSetupHelper.with_multipage_sync_crashing_on_second_page(cassette: cassette) do
             example.run
           end
+
+          LosRecord.synced_timestamp_strategy = synced_timestamp_strategy_was
         end
 
         it "persists the records from the first page but does not update synced_at" do
