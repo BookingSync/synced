@@ -493,7 +493,7 @@ Option name          | Default value    | Description                           
 `:remote`            | `nil`            | [Remote objects to be synchronized with local ones](#synchronization-of-given-remote-objects) | NO | YES |
 `:delegate_attributes`| `[]`            | [Define delegators to synced data Hash attributes](#delegate-attributes)          | YES    | NO |
 `:auto_paginate`     | `true`           | [Whether data should be fetched in batches or as one response](#fetching-methods)                 | YES    | YES |
-`:transaction_per_page` | `false`           | [Whether transaction should be per page of fetched objects or for all the pages](#persisting-fetched-objects)                 | YES    | YES |
+`:transaction_per_page` | `false`       | [Whether transaction should be per page of fetched objects or for all the pages - note that setting this value to `true` will mean always fetching data in batches, even when specifying `auto_paginate` as true](#persisting-fetched-objects)                 | YES    | YES |
 `:handle_processed_objects_proc` | `nil` | [Custom proc taking persisted remote objects, called after persisting batch of data](#persisted-objects)   | YES    | NO |
 
 ## Documentation
