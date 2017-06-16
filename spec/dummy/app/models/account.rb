@@ -8,6 +8,6 @@ class Account < ActiveRecord::Base
   end
 
   def api
-    @api ||= BookingSync::API.new("ACCESS_TOKEN")
+    @api ||= BookingSync::API.new(ENV["ACCESS_TOKEN"])
   end
 end

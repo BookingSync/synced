@@ -37,17 +37,20 @@ module Synced
     #   which will be passed to api client to perform search
     # @option options [Boolean] auto_paginate: If true (default) will fetch and save all
     #   records at once. If false will fetch and save records in batches.
+    # @option options transaction_per_page [Boolean]: If false (default) all fetched records
+    #   will be persisted within single transaction. If true the transaction will be per page
+    #   of fetched records
     # @option options [Proc] handle_processed_objects_proc: Proc taking one argument (persisted remote objects).
     #   Called after persisting remote objects (once in case of auto_paginate, after each batch
     #   when paginating with block).
     def synced(strategy: :updated_since, **options)
       options.assert_valid_keys(:associations, :data_key, :fields,
         :globalized_attributes, :id_key, :include, :initial_sync_since,
-        :local_attributes, :mapper, :only_updated, :remove, :auto_paginate,
+        :local_attributes, :mapper, :only_updated, :remove, :auto_paginate, :transaction_per_page,
         :delegate_attributes, :query_params, :timestamp_strategy, :handle_processed_objects_proc)
       class_attribute :synced_id_key, :synced_data_key,
         :synced_local_attributes, :synced_associations, :synced_only_updated,
-        :synced_mapper, :synced_remove, :synced_include, :synced_fields, :synced_auto_paginate,
+        :synced_mapper, :synced_remove, :synced_include, :synced_fields, :synced_auto_paginate, :synced_transaction_per_page,
         :synced_globalized_attributes, :synced_initial_sync_since, :synced_delegate_attributes,
         :synced_query_params, :synced_timestamp_strategy, :synced_strategy, :synced_handle_processed_objects_proc
       self.synced_strategy              = strategy
@@ -69,6 +72,7 @@ module Synced
       self.synced_query_params          = options.fetch(:query_params, {})
       self.synced_timestamp_strategy    = options.fetch(:timestamp_strategy, nil)
       self.synced_auto_paginate         = options.fetch(:auto_paginate, true)
+      self.synced_transaction_per_page  = options.fetch(:transaction_per_page, false)
       self.synced_handle_processed_objects_proc  = options.fetch(:handle_processed_objects_proc, nil)
       include Synced::DelegateAttributes
       include Synced::HasSyncedData
@@ -93,6 +97,9 @@ module Synced
     #   and then overwritten in the synchronize method.
     # @param auto_paginate [Boolean] - If true (default) will fetch and save all
     #   records at once. If false will fetch and save records in batches.
+    # @param transaction_per_page [Boolean] - If false (default) all fetched records
+    #   will be persisted within single transaction. If true the transaction will be per page
+    #   of fetched records
     # @param api [BookingSync::API::Client] - API client to be used for fetching
     #   remote objects
     # @example Synchronizing amenities
@@ -106,12 +113,13 @@ module Synced
     #  website.rentals.synchronize(remote: remote_rentals)
     #
     def synchronize(scope: scope_from_relation, strategy: synced_strategy, **options)
-      options.assert_valid_keys(:api, :fields, :include, :remote, :remove, :query_params, :association_sync, :auto_paginate)
+      options.assert_valid_keys(:api, :fields, :include, :remote, :remove, :query_params, :association_sync, :auto_paginate, :transaction_per_page)
       options[:remove]  = synced_remove unless options.has_key?(:remove)
       options[:include] = Array.wrap(synced_include) unless options.has_key?(:include)
       options[:fields]  = Array.wrap(synced_fields) unless options.has_key?(:fields)
       options[:query_params] = synced_query_params unless options.has_key?(:query_params)
       options[:auto_paginate] = synced_auto_paginate unless options.has_key?(:auto_paginate)
+      options[:transaction_per_page] = synced_transaction_per_page unless options.has_key?(:transaction_per_page)
       options.merge!({
         scope:                 scope,
         strategy:              strategy,

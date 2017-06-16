@@ -44,6 +44,9 @@ module Synced
       #   which will be mapped with their translations.
       # @option options [Boolean] auto_paginate: If true (default) will fetch and save all
       #   records at once. If false will fetch and save records in batches.
+      # @options options [Boolean] transaction_per_page: if false (default) all fetched records
+      #   will be persisted within single transaction. If true the transaction will be per page
+      #   of fetched records
       def initialize(model_class, options = {})
         @model_class           = model_class
         @scope                 = options[:scope]
@@ -64,21 +67,22 @@ module Synced
         @globalized_attributes = synced_attributes_as_hash(options[:globalized_attributes])
         @query_params         = options[:query_params]
         @auto_paginate         = options[:auto_paginate]
+        @transaction_per_page  = options[:transaction_per_page]
         @handle_processed_objects_proc = options[:handle_processed_objects_proc]
         @remote_objects_ids = []
       end
 
       def perform
         instrument("perform.synced", model: @model_class) do
+          processed_objects = instrument("sync_perform.synced", model: @model_class) do
+            process_remote_objects(remote_objects_persistor)
+          end
           relation_scope.transaction do
-            processed_objects = instrument("sync_perform.synced", model: @model_class) do
-              process_remote_objects(remote_objects_persistor)
-            end
             instrument("remove_perform.synced", model: @model_class) do
               remove_relation.send(remove_strategy) if @remove
             end
-            processed_objects
           end
+          processed_objects
         end
       end
 
@@ -193,11 +197,21 @@ module Synced
 
       def fetch_and_save_remote_objects(processor)
         instrument("fetch_remote_objects.synced", model: @model_class) do
-          if @auto_paginate
-            processor.call(api.paginate(resource_name, api_request_options))
-          else
+          if @transaction_per_page
             api.paginate(resource_name, api_request_options) do |batch|
-              processor.call(batch)
+              relation_scope.transaction do
+                processor.call(batch)
+              end
+            end
+          elsif @auto_paginate
+            relation_scope.transaction do
+              processor.call(api.paginate(resource_name, api_request_options))
+            end
+          else
+            relation_scope.transaction do
+              api.paginate(resource_name, api_request_options) do |batch|
+                processor.call(batch)
+              end
             end
           end
         end

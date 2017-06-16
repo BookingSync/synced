@@ -135,5 +135,38 @@ describe Synced::Strategies::UpdatedSince do
         }.not_to change { Booking.count }
       end
     end
+
+    context "transaction per page" do
+      context "error is thrown after the first page" do
+        around do |example|
+          cassette = "synchronize_los_records_updated_since"
+
+          synced_timestamp_strategy_was = LosRecord.synced_timestamp_strategy
+
+          LosRecord.synced_timestamp_strategy = Synced::Strategies::SyncedPerScopeTimestampStrategy
+
+          LosRecordsSyncSetupHelper.with_multipage_sync_crashing_on_second_page(cassette: cassette) do
+            example.run
+          end
+
+          LosRecord.synced_timestamp_strategy = synced_timestamp_strategy_was
+        end
+
+        it "persists the records from the first page but does not update synced_at" do
+          expect {
+            expect {
+              begin
+                LosRecord.synchronize(
+                  scope: account,
+                  strategy: :updated_since,
+                  transaction_per_page: true,
+                )
+              rescue ActiveRecord::RecordInvalid
+              end
+            }.to change { LosRecord.count }
+          }.not_to change { Synced::Timestamp.count }
+        end
+      end
+    end
   end
 end

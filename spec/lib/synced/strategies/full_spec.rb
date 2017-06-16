@@ -133,18 +133,48 @@ describe Synced::Strategies::Full do
         end
       end
 
-      describe "runs inside transaction" do
-        let(:remote_objects) { [
-          remote_object(id: 1, name: "test"),
-          remote_object(id: 1, name: "invalid")
-        ] }
+      describe "transactions handling" do
+        around do |example|
+          LosRecordsSyncSetupHelper.with_multipage_sync_crashing_on_second_page do
+            example.run
+          end
+        end
 
-        it "and doesn't save anything if saving one record fails" do
-          expect {
+        describe "without provided :transaction_per_page" do
+          before do
+            LosRecord.synced_transaction_per_page = nil
+          end
+
+          it "does not persist objects on any page if something fails" do
             expect {
-              Amenity.synchronize(remote: remote_objects)
-            }.to raise_error(ActiveRecord::RecordInvalid)
-          }.not_to change { Amenity.count }
+              begin
+                LosRecord.synchronize(scope: account, strategy: :full)
+              rescue ActiveRecord::RecordInvalid
+              end
+            }.not_to change { LosRecord.count }
+          end
+        end
+
+         describe "with :transaction_per_page as false" do
+          it "does not persist objects on any page if something fails" do
+            expect {
+              begin
+                LosRecord.synchronize(scope: account, transaction_per_page: false, strategy: :full)
+              rescue ActiveRecord::RecordInvalid
+              end
+            }.not_to change { LosRecord.count }
+          end
+        end
+
+        describe "with :transaction_per_page as true" do
+          it "persists objects per page, even if something fails on the next pages" do
+            expect {
+              begin
+                LosRecord.synchronize(scope: account, transaction_per_page: true, strategy: :full)
+              rescue ActiveRecord::RecordInvalid
+              end
+            }.to change { LosRecord.count }
+          end
         end
       end
     end
@@ -557,7 +587,6 @@ describe Synced::Strategies::Full do
         end
 
         context "when remove: true" do
-
           it "destroys local object by ids from response's meta" do
             expect {
               Booking.synchronize(scope: account, remove: true, query_params: {})

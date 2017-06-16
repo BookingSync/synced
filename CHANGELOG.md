@@ -1,5 +1,8 @@
 ## master
 
+* [feature] Allow to have a transaction per page of fetched objects by using :transaction_per_page option
+* [enhancement] Support only Ruby 2.3+
+
 ## 1.5.2
   * [bugfix] Fix n + 1 querry problems
   * [feature] Allow to choose method of fetching data (with auto_paginate or in batches). Fetching in batches should reduce memory usage. Defaults to auto_paginate, hence no changes required after update.
