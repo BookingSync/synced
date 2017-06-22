@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    synced (1.5.2)
+    synced (1.6.0)
       bookingsync-api (>= 0.1.4)
       hashie
       rails (>= 4.0.0)
@@ -55,7 +55,7 @@ GEM
       safe_yaml (~> 1.0.0)
     diff-lcs (1.2.5)
     erubis (2.7.0)
-    faraday (0.11.0)
+    faraday (0.12.1)
       multipart-post (>= 1.2, < 3)
     ffi (1.9.14)
     formatador (0.2.5)
@@ -85,7 +85,7 @@ GEM
       rb-fsevent (>= 0.9.3)
       rb-inotify (>= 0.9)
     lumberjack (1.0.9)
-    mail (2.6.4)
+    mail (2.6.6)
       mime-types (>= 1.16, < 4)
     method_source (0.8.2)
     mime-types (3.1)
@@ -185,4 +185,4 @@ DEPENDENCIES
   webmock
 
 BUNDLED WITH
-   1.14.3
+   1.15.1

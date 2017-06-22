@@ -1,5 +1,7 @@
 ## master
 
+## 1.6.0 - 2017-06-22
+
 * [feature] Allow to have a transaction per page of fetched objects by using :transaction_per_page option
 * [enhancement] Support only Ruby 2.3+
 
