@@ -198,11 +198,13 @@ module Synced
       def fetch_and_save_remote_objects(processor)
         instrument("fetch_remote_objects.synced", model: @model_class) do
           if @transaction_per_page
+            processed_objects = []
             api.paginate(resource_name, api_request_options) do |batch|
-              relation_scope.transaction do
+              processed_objects += relation_scope.transaction do
                 processor.call(batch)
               end
             end
+            processed_objects
           elsif @auto_paginate
             relation_scope.transaction do
               processor.call(api.paginate(resource_name, api_request_options))
