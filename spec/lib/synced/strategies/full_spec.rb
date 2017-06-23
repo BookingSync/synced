@@ -815,6 +815,22 @@ describe Synced::Strategies::Full do
         end
       end
 
+      context "with transaction_per_page" do
+        let(:remote_objects_batch1) { [remote_object(id: 42, name: "Remote1")] }
+        let(:remote_objects_batch2) { [remote_object(id: 45, name: "Remote4")] }
+        let(:options) { { scope: account, transaction_per_page: true } }
+
+        before do
+          allow_any_instance_of(BookingSync::API::Client).to receive(:paginate)
+            .and_yield(remote_objects_batch1)
+            .and_yield(remote_objects_batch2)
+        end
+
+        it "returns all processed objects" do
+          expect(Rental.synchronize(options).map(&:synced_id)).to eq [42, 45]
+        end
+      end
+
       context "with pagintaion with block" do
         let(:remote_objects_batch1) { [remote_object(id: 42, name: "Remote1")] }
         let(:remote_objects_batch2) { [remote_object(id: 45, name: "Remote4")] }
