@@ -47,12 +47,12 @@ module Synced
       options.assert_valid_keys(:associations, :data_key, :fields,
         :globalized_attributes, :id_key, :include, :initial_sync_since,
         :local_attributes, :mapper, :only_updated, :remove, :auto_paginate, :transaction_per_page,
-        :delegate_attributes, :query_params, :timestamp_strategy, :handle_processed_objects_proc)
+        :delegate_attributes, :query_params, :timestamp_strategy, :handle_processed_objects_proc, :model_name)
       class_attribute :synced_id_key, :synced_data_key,
         :synced_local_attributes, :synced_associations, :synced_only_updated,
         :synced_mapper, :synced_remove, :synced_include, :synced_fields, :synced_auto_paginate, :synced_transaction_per_page,
         :synced_globalized_attributes, :synced_initial_sync_since, :synced_delegate_attributes,
-        :synced_query_params, :synced_timestamp_strategy, :synced_strategy, :synced_handle_processed_objects_proc
+        :synced_query_params, :synced_timestamp_strategy, :synced_strategy, :synced_handle_processed_objects_proc, :synced_model_name
       self.synced_strategy              = strategy
       self.synced_id_key                = options.fetch(:id_key, :synced_id)
       self.synced_data_key              = options.fetch(:data_key,
@@ -74,6 +74,7 @@ module Synced
       self.synced_auto_paginate         = options.fetch(:auto_paginate, true)
       self.synced_transaction_per_page  = options.fetch(:transaction_per_page, false)
       self.synced_handle_processed_objects_proc  = options.fetch(:handle_processed_objects_proc, nil)
+      self.synced_model_name            = options.fetch(:model_name, self.name)
       include Synced::DelegateAttributes
       include Synced::HasSyncedData
     end
@@ -133,7 +134,8 @@ module Synced
         globalized_attributes: synced_globalized_attributes,
         initial_sync_since:    synced_initial_sync_since,
         timestamp_strategy:    synced_timestamp_strategy,
-        handle_processed_objects_proc:  synced_handle_processed_objects_proc
+        handle_processed_objects_proc:  synced_handle_processed_objects_proc,
+        synced_model_name:     synced_model_name
       })
       Synced::Synchronizer.new(self, options).perform
     end
@@ -148,7 +150,8 @@ module Synced
         strategy:              synced_strategy,
         only_updated:          synced_only_updated,
         initial_sync_since:    synced_initial_sync_since,
-        timestamp_strategy:    synced_timestamp_strategy
+        timestamp_strategy:    synced_timestamp_strategy,
+        synced_model_name:     synced_model_name
       }
       Synced::Synchronizer.new(self, options).reset_synced
     end
@@ -167,4 +170,3 @@ module Synced
     end
   end
 end
-

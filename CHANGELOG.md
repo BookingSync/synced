@@ -1,5 +1,8 @@
 ## master
 
+## 1.7.0
+* [feature] Model aliasing. added `model_name` option to synced to determine the model to sync. For example, in user.rb `model_name: "Person"` will look for `Person` class instead of `User`
+
 ## 1.6.0 - 2017-06-22
 
 * [feature] Allow to have a transaction per page of fetched objects by using :transaction_per_page option

@@ -6,6 +6,21 @@ describe Synced::Strategies::Full do
   let(:remote_objects) { [remote_object(id: 42, name: "Remote")] }
 
   describe "#perform" do
+    context "with alias" do
+      let(:synchronize) { RentalAlias.synchronize(remote: remote_objects) }
+
+      it "creates missing remote objects" do
+        expect {
+          synchronize
+        }.to change { RentalAlias.count }.by 1
+      end
+
+      it "returns local synchronized objects" do
+        rentals = synchronize
+        expect(rentals.size).to eq 1
+      end
+    end
+
     context "with remote: [objects] option (without request to API)" do
       context "and they are missing in the local db" do
         let(:synchronize) { Rental.synchronize(remote: remote_objects) }
