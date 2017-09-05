@@ -6,10 +6,8 @@ class RentalAlias < ActiveRecord::Base
         rental.save
       end
     },
-    model_name: "Rental"
+  endpoint: :rentals
   belongs_to :account
-  has_many :periods
-  has_many :los_records
 
   validates :synced_id, presence: true
 

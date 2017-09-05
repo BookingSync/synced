@@ -1,4 +1,4 @@
-[![Code Climate](https://codeclimate.com/github/BookingSync/synced.png)](https://codeclimate.com/github/BookingSync/synced)
+©[![Code Climate](https://codeclimate.com/github/BookingSync/synced.png)](https://codeclimate.com/github/BookingSync/synced)
 [![Build Status](https://travis-ci.org/BookingSync/synced.png?branch=master)](https://travis-ci.org/BookingSync/synced)
 
 # Synced
@@ -479,7 +479,7 @@ Photo.synchronize(transaction_per_page: true)
 ```
 
 ## Model Aliasing
-By default `synced` gem will look for a class in Core with the same name as it was defined in. If you want to name your class differently or place it in a namespace, provide the actual class name with the `model_name` option. like so: `synced model_name: "Booking"`.
+By default `synced` gem will look for an endpoint in BookingSync with the same name as it was defined in. If you want to name your class differently or place it in a namespace, provide the actual resource name with the `endpoint` option. like so: `synced endpoint: "Booking"`.
 
 ## Synced configuration options
 
@@ -498,7 +498,7 @@ Option name          | Default value    | Description                           
 `:auto_paginate`     | `true`           | [Whether data should be fetched in batches or as one response](#fetching-methods)                 | YES    | YES |
 `:transaction_per_page` | `false`       | [Whether transaction should be per page of fetched objects or for all the pages - note that setting this value to `true` will mean always fetching data in batches, even when specifying `auto_paginate` as true](#persisting-fetched-objects)                 | YES    | YES |
 `:handle_processed_objects_proc` | `nil` | [Custom proc taking persisted remote objects, called after persisting batch of data](#persisted-objects)   | YES    | NO |
-`:model_name` | `nil` | name of syncronizeable model on Core | YES    | NO |
+`:endpoint` | `name of the class it was defined in` | name of syncronizeable resource on BookingSync | YES    | NO |
 
 ## Documentation
 

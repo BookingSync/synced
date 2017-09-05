@@ -4,7 +4,6 @@ class CreateRentalAlias < ActiveRecord::Migration
       t.string :name
       t.integer :synced_id
       t.text :synced_data
-      t.datetime :synced_all_at
 
       t.timestamps
     end

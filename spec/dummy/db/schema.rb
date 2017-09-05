@@ -108,7 +108,6 @@ ActiveRecord::Schema.define(version: 20170831101909) do
     t.string   "name"
     t.integer  "synced_id"
     t.text     "synced_data"
-    t.datetime "synced_all_at"
     t.datetime "created_at"
     t.datetime "updated_at"
   end

@@ -49,7 +49,7 @@ module Synced
       #   of fetched records
       def initialize(model_class, options = {})
         @model_class           = model_class
-        @synced_model_name     = options[:synced_model_name]
+        @synced_endpoint       = options[:synced_endpoint]
         @scope                 = options[:scope]
         @id_key                = options[:id_key]
         @data_key              = options[:data_key]
@@ -242,7 +242,7 @@ module Synced
       end
 
       def resource_name
-        @synced_model_name.tableize
+        @synced_endpoint
       end
 
       def remove_strategy
