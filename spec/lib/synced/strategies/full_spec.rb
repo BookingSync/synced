@@ -7,17 +7,18 @@ describe Synced::Strategies::Full do
 
   describe "#perform" do
     context "with alias" do
-      let(:synchronize) { RentalAlias.synchronize(remote: remote_objects) }
+      let(:synchronize) { BookingAlias.synchronize }
+
+      around do |example|
+        VCR.use_cassette("bookings") do
+          example.run
+        end
+      end
 
       it "creates missing remote objects" do
         expect {
           synchronize
-        }.to change { RentalAlias.count }.by 1
-      end
-
-      it "returns local synchronized objects" do
-        rentals = synchronize
-        expect(rentals.size).to eq 1
+        }.to change { BookingAlias.count }.by 39
       end
     end
 

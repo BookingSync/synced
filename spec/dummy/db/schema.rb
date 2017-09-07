@@ -28,6 +28,15 @@ ActiveRecord::Schema.define(version: 20170831101909) do
     t.datetime "updated_at"
   end
 
+  create_table "booking_aliases", force: :cascade do |t|
+    t.integer  "account_id"
+    t.datetime "synced_all_at"
+    t.integer  "synced_id"
+    t.text     "synced_data"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
   create_table "bookings", force: :cascade do |t|
     t.string   "name"
     t.datetime "synced_all_at"
@@ -103,16 +112,6 @@ ActiveRecord::Schema.define(version: 20170831101909) do
     t.datetime "updated_at"
     t.datetime "canceled_at"
   end
-
-  create_table "rental_aliases", force: :cascade do |t|
-    t.string   "name"
-    t.integer  "synced_id"
-    t.text     "synced_data"
-    t.datetime "created_at"
-    t.datetime "updated_at"
-  end
-
-  add_index "rental_aliases", ["synced_id"], name: "index_rental_aliases_on_synced_id"
 
   create_table "rentals", force: :cascade do |t|
     t.string   "name"
