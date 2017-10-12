@@ -1,5 +1,7 @@
 ## master
 
+## 1.6.1 - 2017-10-12
+
 * [improvement] Move default value of `data_key` fetch to block.
 
 ## 1.6.0 - 2017-06-22
