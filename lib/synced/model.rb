@@ -55,8 +55,7 @@ module Synced
         :synced_query_params, :synced_timestamp_strategy, :synced_strategy, :synced_handle_processed_objects_proc, :synced_endpoint
       self.synced_strategy              = strategy
       self.synced_id_key                = options.fetch(:id_key, :synced_id)
-      self.synced_data_key              = options.fetch(:data_key,
-        synced_column_presence(:synced_data))
+      self.synced_data_key              = options.fetch(:data_key) { synced_column_presence(:synced_data) }
       self.synced_local_attributes      = options.fetch(:local_attributes, [])
       self.synced_associations          = options.fetch(:associations, [])
       self.synced_only_updated          = options.fetch(:only_updated, synced_strategy == :updated_since)

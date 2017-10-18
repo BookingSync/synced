@@ -3,6 +3,10 @@
 ## 1.7.0
 * [feature] Model aliasing. added `endpoint` option to synced to determine the model to sync. For example, in user.rb `endpoint: :persons` will look for `Person` class instead of `User`
 
+## 1.6.1 - 2017-10-12
+
+* [improvement] Move default value of `data_key` fetch to block.
+
 ## 1.6.0 - 2017-06-22
 
 * [feature] Allow to have a transaction per page of fetched objects by using :transaction_per_page option
