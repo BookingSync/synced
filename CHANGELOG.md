@@ -1,7 +1,7 @@
 ## master
 
 ## 1.7.0
-* [feature] Model aliasing. added `model_name` option to synced to determine the model to sync. For example, in user.rb `model_name: "Person"` will look for `Person` class instead of `User`
+* [feature] Model aliasing. added `endpoint` option to synced to determine the model to sync. For example, in user.rb `endpoint: :persons` will look for `Person` class instead of `User`
 
 ## 1.6.0 - 2017-06-22
 

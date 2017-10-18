@@ -479,7 +479,7 @@ Photo.synchronize(transaction_per_page: true)
 ```
 
 ## Model Aliasing
-By default `synced` gem will look for an endpoint in BookingSync with the same name as it was defined in. If you want to name your class differently or place it in a namespace, provide the actual resource name with the `endpoint` option. like so: `synced endpoint: "Booking"`.
+By default `synced` gem will look for an endpoint in BookingSync with the same name as it was defined in. If you want to name your class differently or place it in a namespace, provide endpoint of resource that you want to access with the `endpoint` option. Like so: `synced endpoint: :bookings`.
 
 ## Synced configuration options
 
@@ -498,7 +498,7 @@ Option name          | Default value    | Description                           
 `:auto_paginate`     | `true`           | [Whether data should be fetched in batches or as one response](#fetching-methods)                 | YES    | YES |
 `:transaction_per_page` | `false`       | [Whether transaction should be per page of fetched objects or for all the pages - note that setting this value to `true` will mean always fetching data in batches, even when specifying `auto_paginate` as true](#persisting-fetched-objects)                 | YES    | YES |
 `:handle_processed_objects_proc` | `nil` | [Custom proc taking persisted remote objects, called after persisting batch of data](#persisted-objects)   | YES    | NO |
-`:endpoint` | `name of the class it was defined in` | name of syncronizeable resource on BookingSync | YES    | NO |
+`:endpoint` | `table name of the class it was defined in` | table name of syncronizeable resource on BookingSync | YES    | NO |
 
 ## Documentation
 
