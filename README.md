@@ -275,12 +275,13 @@ and copy the body from here:
 class CreateSyncedTimestamps < ActiveRecord::Migration
   def change
     create_table :synced_timestamps do |t|
-      t.belongs_to :parent_scope, polymorphic: true
+      t.string :parent_scope_type, null: false
+      t.integer :parent_scope_id, null: :false
       t.string :model_class, null: false
       t.datetime :synced_at, null: false
     end
 
-    add_index :synced_timestamps, [:parent_scope_id, :parent_scope_type, :model_class, :synced_at], name: 'synced_timestamps_max_index', order: { synced_at: 'DESC' }
+    add_index :synced_timestamps, [:parent_scope_id, :parent_scope_type, :model_class, :synced_at], name: "synced_timestamps_max_index", order: { synced_at: "DESC" }
   end
 end
 ```
