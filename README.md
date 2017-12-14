@@ -275,8 +275,8 @@ and copy the body from here:
 class CreateSyncedTimestamps < ActiveRecord::Migration
   def change
     create_table :synced_timestamps do |t|
-      t.string :parent_scope_type, null: false
-      t.integer :parent_scope_id, null: :false
+      t.string :parent_scope_type
+      t.integer :parent_scope_id
       t.string :model_class, null: false
       t.datetime :synced_at, null: false
     end
