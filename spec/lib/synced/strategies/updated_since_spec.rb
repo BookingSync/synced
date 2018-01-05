@@ -107,6 +107,33 @@ describe Synced::Strategies::UpdatedSince do
           }.to change { Synced::Timestamp.with_scope_and_model(account, LosRecord).last_synced_at }.from(nil).to(future_sync_time)
         end
       end
+
+      context "with ENV['LAST_SYNCED_AT_OFFSET'] specified" do
+        let(:request_timestamp) { 1.year.ago }
+
+        before do
+          ENV["LAST_SYNCED_AT_OFFSET"] = "-60"
+          Synced::Timestamp.with_scope_and_model(account, LosRecord).create(synced_at: Time.zone.parse("2010-01-01 12:12:12 UTC"))
+          # we defined offset on -60 seconds so query should have updated since equal to 2010-01-01 12:11:12 UTC
+          stub_request(:get, "https://www.bookingsync.com/api/v3/los_records?updated_since=2010-01-01%2012:11:12%20UTC").
+            to_return(
+              status: 200,
+              body: { "los_records" => [], "meta" => { "deleted_ids" => [] } }.to_json,
+              headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s }
+            )
+        end
+
+        after do
+          ENV.delete("LAST_SYNCED_AT_OFFSET")
+        end
+
+        it "synchronizes los by using timestamp changed by amount of seconds defined by LAST_SYNCED_AT_OFFSET" do
+          expect(account.api).to receive(:paginate).with(
+            "los_records", hash_including(updated_since: Time.zone.parse("2010-01-01 12:11:12 UTC"))
+          ).and_call_original
+          LosRecord.synchronize(scope: account, remove: true, query_params: {})
+        end
+      end
     end
 
     context "with response without request_timestamp" do

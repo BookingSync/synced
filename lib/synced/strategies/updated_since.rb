@@ -44,7 +44,11 @@ module Synced
 
       def updated_since
         instrument("updated_since.synced") do
-          [@timestamp_strategy.last_synced_at, initial_sync_since].compact.max
+          last_synced_at_offset = ENV.fetch("LAST_SYNCED_AT_OFFSET", 0).to_i
+          [
+            @timestamp_strategy.last_synced_at&.advance(seconds: last_synced_at_offset),
+            initial_sync_since
+          ].compact.max
         end
       end
 
