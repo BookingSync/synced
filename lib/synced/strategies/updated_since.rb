@@ -11,6 +11,7 @@ module Synced
       def initialize(model_class, options = {})
         super
         @initial_sync_since = options[:initial_sync_since]
+        @tolerance = options[:tolerance]
         timestampt_strategy_class = options[:timestamp_strategy] || Synced::Strategies::SyncedAllAtTimestampStrategy
         @timestamp_strategy = timestampt_strategy_class.new(relation_scope: relation_scope, scope: @scope, model_class: model_class)
       end
@@ -44,12 +45,13 @@ module Synced
 
       def updated_since
         instrument("updated_since.synced") do
-          last_synced_at_offset = ENV.fetch("LAST_SYNCED_AT_OFFSET", 0).to_i
-          [
-            @timestamp_strategy.last_synced_at&.advance(seconds: last_synced_at_offset),
-            initial_sync_since
-          ].compact.max
+          [last_synced_at_with_offset, initial_sync_since].compact.max
         end
+      end
+
+      def last_synced_at_with_offset
+        return if @timestamp_strategy.last_synced_at.blank?
+        @timestamp_strategy.last_synced_at - @tolerance
       end
 
       def deleted_remote_objects_ids
