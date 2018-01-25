@@ -111,10 +111,16 @@ describe Synced::Strategies::UpdatedSince do
       context "with tolerance specified" do
         let(:request_timestamp) { 1.year.ago }
 
-        around do
+        before do
           LosRecord.instance_eval do
             synced strategy: :updated_since, timestamp_strategy: Synced::Strategies::SyncedPerScopeTimestampStrategy,
               tolerance: 60
+          end
+        end
+
+        after do
+          LosRecord.instance_eval do
+            synced strategy: :updated_since, timestamp_strategy: Synced::Strategies::SyncedPerScopeTimestampStrategy
           end
         end
 
