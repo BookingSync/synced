@@ -1,5 +1,7 @@
 ## master
 
+* [feature] Synced will accept tolerance param which reduces updated_since value by specified amount of seconds.
+
 ## 1.6.1 - 2017-10-12
 
 * [improvement] Move default value of `data_key` fetch to block.
@@ -10,7 +12,7 @@
 * [enhancement] Support only Ruby 2.3+
 
 ## 1.5.2
-  * [bugfix] Fix n + 1 querry problems
+  * [bugfix] Fix n + 1 query problems
   * [feature] Allow to choose method of fetching data (with auto_paginate or in batches). Fetching in batches should reduce memory usage. Defaults to auto_paginate, hence no changes required after update.
   * [improvement] Update bookingsync-api gem to 0.1.4
 

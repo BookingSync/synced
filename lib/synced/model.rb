@@ -43,16 +43,20 @@ module Synced
     # @option options [Proc] handle_processed_objects_proc: Proc taking one argument (persisted remote objects).
     #   Called after persisting remote objects (once in case of auto_paginate, after each batch
     #   when paginating with block).
+    # @option options [Integer] tolerance: amount of seconds subtracted from last_request timestamp.
+    #   Used to ensure records are up to date in case request has been made in the middle of transaction.
+    #   Defaults to 0.
     def synced(strategy: :updated_since, **options)
-      options.assert_valid_keys(:associations, :data_key, :fields,
-        :globalized_attributes, :id_key, :include, :initial_sync_since,
-        :local_attributes, :mapper, :only_updated, :remove, :auto_paginate, :transaction_per_page,
-        :delegate_attributes, :query_params, :timestamp_strategy, :handle_processed_objects_proc)
+      options.assert_valid_keys(:associations, :data_key, :fields, :globalized_attributes,
+        :id_key, :include, :initial_sync_since, :local_attributes, :mapper, :only_updated,
+        :remove, :auto_paginate, :transaction_per_page, :delegate_attributes, :query_params,
+        :timestamp_strategy, :handle_processed_objects_proc, :tolerance)
       class_attribute :synced_id_key, :synced_data_key,
         :synced_local_attributes, :synced_associations, :synced_only_updated,
         :synced_mapper, :synced_remove, :synced_include, :synced_fields, :synced_auto_paginate, :synced_transaction_per_page,
         :synced_globalized_attributes, :synced_initial_sync_since, :synced_delegate_attributes,
-        :synced_query_params, :synced_timestamp_strategy, :synced_strategy, :synced_handle_processed_objects_proc
+        :synced_query_params, :synced_timestamp_strategy, :synced_strategy, :synced_handle_processed_objects_proc,
+        :synced_tolerance
       self.synced_strategy              = strategy
       self.synced_id_key                = options.fetch(:id_key, :synced_id)
       self.synced_data_key              = options.fetch(:data_key) { synced_column_presence(:synced_data) }
@@ -73,6 +77,7 @@ module Synced
       self.synced_auto_paginate         = options.fetch(:auto_paginate, true)
       self.synced_transaction_per_page  = options.fetch(:transaction_per_page, false)
       self.synced_handle_processed_objects_proc  = options.fetch(:handle_processed_objects_proc, nil)
+      self.synced_tolerance             = options.fetch(:tolerance, 0).to_i.abs
       include Synced::DelegateAttributes
       include Synced::HasSyncedData
     end
@@ -132,7 +137,8 @@ module Synced
         globalized_attributes: synced_globalized_attributes,
         initial_sync_since:    synced_initial_sync_since,
         timestamp_strategy:    synced_timestamp_strategy,
-        handle_processed_objects_proc:  synced_handle_processed_objects_proc
+        handle_processed_objects_proc:  synced_handle_processed_objects_proc,
+        tolerance:             synced_tolerance
       })
       Synced::Synchronizer.new(self, options).perform
     end

@@ -107,6 +107,61 @@ describe Synced::Strategies::UpdatedSince do
           }.to change { Synced::Timestamp.with_scope_and_model(account, LosRecord).last_synced_at }.from(nil).to(future_sync_time)
         end
       end
+
+      context "with tolerance specified" do
+        let(:request_timestamp) { 1.year.ago }
+
+        before do
+          LosRecord.instance_eval do
+            synced strategy: :updated_since, timestamp_strategy: Synced::Strategies::SyncedPerScopeTimestampStrategy,
+              tolerance: 60
+          end
+        end
+
+        after do
+          LosRecord.instance_eval do
+            synced strategy: :updated_since, timestamp_strategy: Synced::Strategies::SyncedPerScopeTimestampStrategy
+          end
+        end
+
+        context "initial sync" do
+          before do
+            stub_request(:get, "https://www.bookingsync.com/api/v3/los_records?updated_since")
+              .to_return(
+                status: 200,
+                body: { "los_records" => [], "meta" => { "deleted_ids" => [] } }.to_json,
+                headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s }
+              )
+          end
+
+          it "synchronizes records without specifying updated_since" do
+            expect(account.api).to receive(:paginate).with(
+              "los_records", hash_including(updated_since: nil)
+            ).and_call_original
+            LosRecord.synchronize(scope: account, remove: true, query_params: {})
+          end
+        end
+
+        context "with earlier syncs present" do
+          before do
+            Synced::Timestamp.with_scope_and_model(account, LosRecord).create(synced_at: Time.zone.parse("2010-01-01 12:12:12 UTC"))
+            # we defined offset tolerance of 60 seconds so query should have updated since equal to 2010-01-01 12:11:12 UTC
+            stub_request(:get, "https://www.bookingsync.com/api/v3/los_records?updated_since=2010-01-01%2012:11:12%20UTC")
+              .to_return(
+                status: 200,
+                body: { "los_records" => [], "meta" => { "deleted_ids" => [] } }.to_json,
+                headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s }
+              )
+          end
+
+          it "synchronizes records using timestamp reduced by amount of seconds defined specified by :tolerance" do
+            expect(account.api).to receive(:paginate).with(
+              "los_records", hash_including(updated_since: Time.zone.parse("2010-01-01 12:11:12 UTC"))
+            ).and_call_original
+            LosRecord.synchronize(scope: account, remove: true, query_params: {})
+          end
+        end
+      end
     end
 
     context "with response without request_timestamp" do
