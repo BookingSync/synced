@@ -1,5 +1,7 @@
 ## master
 
+## 1.7.0 - 2018-02-27
+
 * [feature] Synced will accept tolerance param which reduces updated_since value by specified amount of seconds.
 
 ## 1.6.1 - 2017-10-12
