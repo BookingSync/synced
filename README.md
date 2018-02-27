@@ -307,8 +307,8 @@ end
 ```
 
 Will always reduce `updated_since` param by 60 seconds.
-Setting this value too high can cause re-fetching same changes multiple time, which
-may exhaust rate limits of your application much faster and increase overall sync time.
+Setting this value too high can cause re-fetching same changes multiple times, which
+may exhaust rate limit of your application much faster and increase overall sync time.
 
 
 ### Forcing local objects to be re-synced with the API
