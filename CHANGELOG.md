@@ -1,7 +1,11 @@
 ## master
 
-## 1.7.0
+## 1.8.0 - 2018-03-23
 * [feature] Model aliasing. added `endpoint` option to synced to determine the model to sync. For example, in user.rb `endpoint: :persons` will look for `Person` class instead of `User`
+
+## 1.7.0 - 2018-02-27
+
+* [feature] Synced will accept tolerance param which reduces updated_since value by specified amount of seconds.
 
 ## 1.6.1 - 2017-10-12
 
@@ -13,7 +17,7 @@
 * [enhancement] Support only Ruby 2.3+
 
 ## 1.5.2
-  * [bugfix] Fix n + 1 querry problems
+  * [bugfix] Fix n + 1 query problems
   * [feature] Allow to choose method of fetching data (with auto_paginate or in batches). Fetching in batches should reduce memory usage. Defaults to auto_paginate, hence no changes required after update.
   * [improvement] Update bookingsync-api gem to 0.1.4
 

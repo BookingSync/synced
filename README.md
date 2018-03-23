@@ -275,12 +275,13 @@ and copy the body from here:
 class CreateSyncedTimestamps < ActiveRecord::Migration
   def change
     create_table :synced_timestamps do |t|
-      t.belongs_to :parent_scope, polymorphic: true
+      t.string :parent_scope_type
+      t.integer :parent_scope_id
       t.string :model_class, null: false
       t.datetime :synced_at, null: false
     end
 
-    add_index :synced_timestamps, [:parent_scope_id, :parent_scope_type, :model_class, :synced_at], name: 'synced_timestamps_max_index', order: { synced_at: 'DESC' }
+    add_index :synced_timestamps, [:parent_scope_id, :parent_scope_type, :model_class, :synced_at], name: "synced_timestamps_max_index", order: { synced_at: "DESC" }
   end
 end
 ```
@@ -288,6 +289,27 @@ end
 
 This strategy is added to fix the problems with massive updates on `synced_all_at`. Proper cleanup of timestamp records
 is needed once in a while with `Synced::Timestamp.cleanup` (cleans records older than 1 week).
+
+### Syncing with offset
+
+Sometimes (mostly for pricing related endpoints like LOS Records or Rates) sync request
+is made during transaction. That can make your local database out of sync, usually due to
+older records not being removed. For such cases there is `tolerance` option which will
+reduce `updated_since` value by specified amount of seconds. That way, if your last request has
+been made during transaction, everything will heal itself during next sync.
+
+For example:
+
+```ruby
+class Rental < ActiveRecord::Base
+  synced tolerance: 60
+end
+```
+
+Will always reduce `updated_since` param by 60 seconds.
+Setting this value too high can cause re-fetching same changes multiple times, which
+may exhaust rate limit of your application much faster and increase overall sync time.
+
 
 ### Forcing local objects to be re-synced with the API
 
@@ -498,7 +520,8 @@ Option name          | Default value    | Description                           
 `:auto_paginate`     | `true`           | [Whether data should be fetched in batches or as one response](#fetching-methods)                 | YES    | YES |
 `:transaction_per_page` | `false`       | [Whether transaction should be per page of fetched objects or for all the pages - note that setting this value to `true` will mean always fetching data in batches, even when specifying `auto_paginate` as true](#persisting-fetched-objects)                 | YES    | YES |
 `:handle_processed_objects_proc` | `nil` | [Custom proc taking persisted remote objects, called after persisting batch of data](#persisted-objects)   | YES    | NO |
-`:endpoint` | `table name of the class it was defined in` | table name of syncronizeable resource on BookingSync | YES    | NO |
+`:tolerance`         | 0                | [How many seconds updated_since param should be reduced during request](#syncing-with-offset) | YES | NO |
+`:endpoint` | `table name of the class it was defined in` | endpoint for synchronizeable resource on BookingSync | YES    | NO |
 
 ## Documentation
 
