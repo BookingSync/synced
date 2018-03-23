@@ -242,7 +242,7 @@ module Synced
       end
 
       def resource_name
-        @synced_endpoint
+        @synced_endpoint.to_s.tableize
       end
 
       def remove_strategy
