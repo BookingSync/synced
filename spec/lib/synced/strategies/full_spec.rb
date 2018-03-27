@@ -7,18 +7,58 @@ describe Synced::Strategies::Full do
 
   describe "#perform" do
     context "with alias" do
-      let(:synchronize) { BookingAlias.synchronize }
-
       around do |example|
         VCR.use_cassette("bookings") do
           example.run
         end
       end
 
-      it "creates missing remote objects" do
-        expect {
-          synchronize
-        }.to change { BookingAlias.count }.by 39
+      context "without scope" do
+        let(:synchronize) { BookingAlias.synchronize }
+
+        it "creates missing remote objects" do
+          expect { synchronize }.to change { BookingAlias.count }
+        end
+      end
+
+      context "with scope" do
+        let(:synchronize) { account.booking_aliases.synchronize }
+
+        it "creates missing remote objects" do
+          expect { synchronize }.to change { BookingAlias.count }
+        end
+      end
+
+      context "fetch options" do
+        context "with pagination with block" do
+          let(:synchronize) do
+            account.booking_aliases.synchronize(auto_paginate: false, transaction_per_page: true)
+          end
+
+          it "creates missing remote objects" do
+            expect { synchronize }.to change { BookingAlias.count }
+          end
+        end
+
+        context "with auto paginate" do
+          let(:synchronize) do
+            account.booking_aliases.synchronize(auto_paginate: true, transaction_per_page: false)
+          end
+
+          it "creates missing remote objects" do
+            expect { synchronize }.to change { BookingAlias.count }
+          end
+        end
+
+        context "without auto paginate or pagination with block" do
+          let(:synchronize) do
+            account.booking_aliases.synchronize(auto_paginate: false, transaction_per_page: false)
+          end
+
+          it "creates missing remote objects" do
+            expect { synchronize }.to change { BookingAlias.count }
+          end
+        end
       end
     end
 

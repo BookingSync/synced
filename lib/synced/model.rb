@@ -78,7 +78,7 @@ module Synced
       self.synced_transaction_per_page  = options.fetch(:transaction_per_page, false)
       self.synced_handle_processed_objects_proc  = options.fetch(:handle_processed_objects_proc, nil)
       self.synced_tolerance             = options.fetch(:tolerance, 0).to_i.abs
-      self.synced_endpoint              = options.fetch(:endpoint, self.name)
+      self.synced_endpoint              = options.fetch(:endpoint) { self.to_s.tableize }
       include Synced::DelegateAttributes
       include Synced::HasSyncedData
     end

@@ -199,18 +199,18 @@ module Synced
       def fetch_and_save_remote_objects(processor)
         instrument("fetch_remote_objects.synced", model: @model_class) do
           if @transaction_per_page
-            api.paginate(resource_name, api_request_options) do |batch|
+            api.paginate(@synced_endpoint, api_request_options) do |batch|
               relation_scope.transaction do
                 processor.call(batch)
               end
             end
           elsif @auto_paginate
             relation_scope.transaction do
-              processor.call(api.paginate(resource_name, api_request_options))
+              processor.call(api.paginate(@synced_endpoint, api_request_options))
             end
           else
             relation_scope.transaction do
-              api.paginate(resource_name, api_request_options) do |batch|
+              api.paginate(@synced_endpoint, api_request_options) do |batch|
                 processor.call(batch)
               end
             end
@@ -242,7 +242,7 @@ module Synced
       end
 
       def resource_name
-        @synced_endpoint.to_s.tableize
+        @model_class.to_s.tableize
       end
 
       def remove_strategy
