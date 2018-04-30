@@ -1,6 +1,6 @@
 ## master
 
-## 1.8.0 - 2018-03-23
+## 1.8.0 - 2018-04-30
 * [feature] Model aliasing. added `endpoint` option to synced to determine the model to sync. For example, in user.rb `endpoint: :persons` will look for `Person` class instead of `User`
 
 ## 1.7.0 - 2018-02-27
