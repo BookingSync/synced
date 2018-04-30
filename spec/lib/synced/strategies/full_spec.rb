@@ -6,6 +6,62 @@ describe Synced::Strategies::Full do
   let(:remote_objects) { [remote_object(id: 42, name: "Remote")] }
 
   describe "#perform" do
+    context "with alias" do
+      around do |example|
+        VCR.use_cassette("bookings") do
+          example.run
+        end
+      end
+
+      context "without scope" do
+        let(:synchronize) { BookingAlias.synchronize }
+
+        it "creates missing remote objects" do
+          expect { synchronize }.to change { BookingAlias.count }
+        end
+      end
+
+      context "with scope" do
+        let(:synchronize) { account.booking_aliases.synchronize }
+
+        it "creates missing remote objects" do
+          expect { synchronize }.to change { BookingAlias.count }
+        end
+      end
+
+      context "fetch options" do
+        context "with pagination with block" do
+          let(:synchronize) do
+            account.booking_aliases.synchronize(auto_paginate: false, transaction_per_page: true)
+          end
+
+          it "creates missing remote objects" do
+            expect { synchronize }.to change { BookingAlias.count }
+          end
+        end
+
+        context "with auto paginate" do
+          let(:synchronize) do
+            account.booking_aliases.synchronize(auto_paginate: true, transaction_per_page: false)
+          end
+
+          it "creates missing remote objects" do
+            expect { synchronize }.to change { BookingAlias.count }
+          end
+        end
+
+        context "without auto paginate or pagination with block" do
+          let(:synchronize) do
+            account.booking_aliases.synchronize(auto_paginate: false, transaction_per_page: false)
+          end
+
+          it "creates missing remote objects" do
+            expect { synchronize }.to change { BookingAlias.count }
+          end
+        end
+      end
+    end
+
     context "with remote: [objects] option (without request to API)" do
       context "and they are missing in the local db" do
         let(:synchronize) { Rental.synchronize(remote: remote_objects) }

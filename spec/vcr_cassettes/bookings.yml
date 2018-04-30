@@ -1,0 +1,86 @@
+---
+http_interactions:
+- request:
+    method: get
+    uri: https://www.bookingsync.com/api/v3/bookings?updated_since
+    body:
+      encoding: UTF-8
+      string: "{}"
+    headers:
+      User-Agent:
+      - BookingSync API gem v0.1.5
+      Accept:
+      - application/vnd.api+json
+      Content-Type:
+      - application/vnd.api+json
+      Authorization:
+      - Bearer ad8d9e69e9bd11efe7c0d0ac77d636500c908f0005296999d2efb6e2301967c6
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Connection:
+      - keep-alive
+      Keep-Alive:
+      - 30
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Server:
+      - nginx
+      Date:
+      - Thu, 07 Sep 2017 11:40:25 GMT
+      Content-Type:
+      - application/vnd.api+json; charset=utf-8
+      Transfer-Encoding:
+      - chunked
+      Connection:
+      - keep-alive
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-Xss-Protection:
+      - 1; mode=block
+      X-Content-Type-Options:
+      - nosniff
+      X-Updated-Since-Request-Synced-At:
+      - 2017-09-07 11:40:25 UTC
+      X-Ratelimit-Limit:
+      - '1000'
+      X-Ratelimit-Reset:
+      - '1504785600'
+      X-Ratelimit-Remaining:
+      - '998'
+      Link:
+      - <https://www.bookingsync.com/api/v3/bookings?page=1&updated_since=>; rel="first",
+        <https://www.bookingsync.com/api/v3/bookings?page=1&updated_since=>; rel="last"
+      X-Total-Pages:
+      - '1'
+      X-Total-Count:
+      - '39'
+      X-Per-Page:
+      - '100'
+      Etag:
+      - W/"f1458377c644228f17fb4e4123228107"
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      P3p:
+      - CP="OTI DSP COR CUR ADMo DEVo TAI PSAi PSDi IVAi IVDi CONi HISi TELi OTPi
+        OUR SAMi OTRo UNRo PUBi IND UNI STA"
+      Set-Cookie:
+      - ahoy_track=true; path=/; secure
+      - ahoy_visit=bda7c3be-9264-42af-bf30-2b6279d657d2; path=/; expires=Thu, 14 Sep
+        2017 11:40:25 -0000; secure
+      - ahoy_visitor=5644289b-d0b9-4973-98d6-a71431dccbe3; path=/; expires=Sat, 07
+        Sep 2019 11:40:25 -0000; secure
+      X-Request-Id:
+      - e0853457-fdc9-48d3-9cdf-16b174b80afc
+      X-Runtime:
+      - '0.163367'
+      Strict-Transport-Security:
+      - max-age=31536000
+    body:
+      encoding: UTF-8
+      string: '{"links":{"bookings.account":"https://www.bookingsync.com/api/v3/accounts/{bookings.account}","bookings.rental":"https://www.bookingsync.com/api/v3/rentals/{bookings.rental}","bookings.bookings_tags":"https://www.bookingsync.com/api/v3/bookings_tags/{bookings.bookings_tags}"},"bookings":[{"links":{"account":9372,"bookings_tags":[],"rental":33191},"id":2030273,"start_at":"2017-08-27T16:00:00Z","end_at":"2017-09-09T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:34:57Z","reference":"017IKH","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33191},"id":2030274,"start_at":"2017-09-09T16:00:00Z","end_at":"2017-09-10T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:34:58Z","reference":"017IKI","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33191},"id":2030275,"start_at":"2017-09-10T16:00:00Z","end_at":"2017-09-16T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:34:58Z","reference":"017IKJ","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33191},"id":2030277,"start_at":"2017-09-22T16:00:00Z","end_at":"2017-10-02T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:34:58Z","reference":"017IKL","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33191},"id":2030278,"start_at":"2017-10-02T16:00:00Z","end_at":"2017-10-04T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:34:58Z","reference":"017IKM","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33191},"id":2030282,"start_at":"2017-11-04T16:00:00Z","end_at":"2017-11-07T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:34:58Z","reference":"017IKQ","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33191},"id":2030285,"start_at":"2017-12-01T16:00:00Z","end_at":"2017-12-04T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:34:58Z","reference":"017IKT","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33191},"id":2030286,"start_at":"2017-12-06T16:00:00Z","end_at":"2017-12-08T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:34:58Z","reference":"017IKU","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33191},"id":2030287,"start_at":"2017-12-08T16:00:00Z","end_at":"2017-12-09T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:34:58Z","reference":"017IKV","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33191},"id":2030288,"start_at":"2017-12-09T16:00:00Z","end_at":"2017-12-14T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:34:58Z","reference":"017IKW","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33191},"id":2030289,"start_at":"2017-12-16T16:00:00Z","end_at":"2017-12-29T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:34:58Z","reference":"017IKX","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33192},"id":2030302,"start_at":"2017-08-30T16:00:00Z","end_at":"2017-09-11T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:34:58Z","reference":"017ILA","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33192},"id":2030303,"start_at":"2017-09-11T16:00:00Z","end_at":"2017-09-19T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:34:58Z","reference":"017ILB","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33192},"id":2030304,"start_at":"2017-09-19T16:00:00Z","end_at":"2017-09-26T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:34:58Z","reference":"017ILC","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33192},"id":2030305,"start_at":"2017-09-26T16:00:00Z","end_at":"2017-10-05T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:34:58Z","reference":"017ILD","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33192},"id":2030306,"start_at":"2017-10-05T16:00:00Z","end_at":"2017-10-14T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:34:58Z","reference":"017ILE","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33192},"id":2030307,"start_at":"2017-10-15T16:00:00Z","end_at":"2017-10-19T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:34:59Z","reference":"017ILF","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33192},"id":2030308,"start_at":"2017-10-19T16:00:00Z","end_at":"2017-10-21T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:34:59Z","reference":"017ILG","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33192},"id":2030309,"start_at":"2017-10-21T16:00:00Z","end_at":"2017-10-27T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:34:59Z","reference":"017ILH","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33192},"id":2030311,"start_at":"2017-11-01T16:00:00Z","end_at":"2017-11-13T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:34:59Z","reference":"017ILJ","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33192},"id":2030312,"start_at":"2017-11-13T16:00:00Z","end_at":"2017-11-17T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:34:59Z","reference":"017ILK","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33192},"id":2030315,"start_at":"2017-11-21T16:00:00Z","end_at":"2017-11-30T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:34:59Z","reference":"017ILN","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33192},"id":2030316,"start_at":"2017-12-01T16:00:00Z","end_at":"2017-12-12T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:34:59Z","reference":"017ILO","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33192},"id":2030317,"start_at":"2017-12-12T16:00:00Z","end_at":"2017-12-17T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:34:59Z","reference":"017ILP","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33192},"id":2030318,"start_at":"2017-12-17T16:00:00Z","end_at":"2017-12-26T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:34:59Z","reference":"017ILQ","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33193},"id":2030334,"start_at":"2017-09-05T16:00:00Z","end_at":"2017-09-19T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:35:00Z","reference":"017IM6","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33193},"id":2030335,"start_at":"2017-09-19T16:00:00Z","end_at":"2017-10-03T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:35:00Z","reference":"017IM7","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33193},"id":2030336,"start_at":"2017-10-03T16:00:00Z","end_at":"2017-10-11T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:35:00Z","reference":"017IM8","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33193},"id":2030337,"start_at":"2017-10-11T16:00:00Z","end_at":"2017-10-16T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:35:00Z","reference":"017IM9","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33193},"id":2030338,"start_at":"2017-10-16T16:00:00Z","end_at":"2017-10-27T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:35:00Z","reference":"017IMA","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33193},"id":2030339,"start_at":"2017-10-27T16:00:00Z","end_at":"2017-11-06T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:35:00Z","reference":"017IMB","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33193},"id":2030340,"start_at":"2017-11-06T16:00:00Z","end_at":"2017-11-07T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:35:00Z","reference":"017IMC","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33193},"id":2030341,"start_at":"2017-11-07T16:00:00Z","end_at":"2017-11-13T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:35:00Z","reference":"017IMD","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33193},"id":2030342,"start_at":"2017-11-13T16:00:00Z","end_at":"2017-11-22T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:35:00Z","reference":"017IME","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33193},"id":2030343,"start_at":"2017-11-22T16:00:00Z","end_at":"2017-11-27T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:35:00Z","reference":"017IMF","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33193},"id":2030344,"start_at":"2017-11-27T16:00:00Z","end_at":"2017-12-07T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:35:00Z","reference":"017IMG","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33193},"id":2030345,"start_at":"2017-12-07T16:00:00Z","end_at":"2017-12-20T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:35:00Z","reference":"017IMH","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33193},"id":2030346,"start_at":"2017-12-20T16:00:00Z","end_at":"2017-12-22T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:35:00Z","reference":"017IMI","owned_by_app":false},{"links":{"account":9372,"bookings_tags":[],"rental":33193},"id":2030347,"start_at":"2017-12-22T16:00:00Z","end_at":"2017-12-29T10:00:00Z","status":"Booked","updated_at":"2017-05-24T10:35:01Z","reference":"017IMJ","owned_by_app":false}],"meta":{"deleted_ids":[],"Link":{"first":"https://www.bookingsync.com/api/v3/bookings?page=1&updated_since=","last":"https://www.bookingsync.com/api/v3/bookings?page=1&updated_since="},"X-Total-Pages":"1","X-Total-Count":"39","X-Per-Page":"100"}}'
+    http_version: 
+  recorded_at: Thu, 07 Sep 2017 11:40:24 GMT
+recorded_with: VCR 3.0.3

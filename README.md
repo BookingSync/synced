@@ -1,4 +1,4 @@
-[![Code Climate](https://codeclimate.com/github/BookingSync/synced.png)](https://codeclimate.com/github/BookingSync/synced)
+©[![Code Climate](https://codeclimate.com/github/BookingSync/synced.png)](https://codeclimate.com/github/BookingSync/synced)
 [![Build Status](https://travis-ci.org/BookingSync/synced.png?branch=master)](https://travis-ci.org/BookingSync/synced)
 
 # Synced
@@ -500,6 +500,9 @@ Or as a param in `synchronize` method:
 Photo.synchronize(transaction_per_page: true)
 ```
 
+## Model Aliasing
+By default `synced` gem will look for an endpoint in BookingSync with the same name as it was defined in. If you want to name your class differently or place it in a namespace, provide endpoint of resource that you want to access with the `endpoint` option. Like so: `synced endpoint: :bookings`.
+
 ## Synced configuration options
 
 Option name          | Default value    | Description                                                                       | synced | synchronize |
@@ -518,6 +521,7 @@ Option name          | Default value    | Description                           
 `:transaction_per_page` | `false`       | [Whether transaction should be per page of fetched objects or for all the pages - note that setting this value to `true` will mean always fetching data in batches, even when specifying `auto_paginate` as true](#persisting-fetched-objects)                 | YES    | YES |
 `:handle_processed_objects_proc` | `nil` | [Custom proc taking persisted remote objects, called after persisting batch of data](#persisted-objects)   | YES    | NO |
 `:tolerance`         | 0                | [How many seconds updated_since param should be reduced during request](#syncing-with-offset) | YES | NO |
+`:endpoint` | `table name of the class it was defined in` | endpoint for synchronizeable resource on BookingSync | YES    | NO |
 
 ## Documentation
 

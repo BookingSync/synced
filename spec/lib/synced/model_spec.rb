@@ -66,7 +66,7 @@ describe Synced::Model do
             + "Valid keys are: :associations, :data_key, :fields, :globalized_attributes, :id_key, " \
             + ":include, :initial_sync_since, :local_attributes, :mapper, :only_updated, :remove, " \
             + ":auto_paginate, :transaction_per_page, :delegate_attributes, :query_params, :timestamp_strategy, " \
-            + ":handle_processed_objects_proc, :tolerance"
+            + ":handle_processed_objects_proc, :tolerance, :endpoint"
         }
       end
     end
