@@ -117,7 +117,7 @@ module Synced
     #
     #  website.rentals.synchronize(remote: remote_rentals)
     #
-    def synchronize(scope: scope_from_relation, strategy: synced_strategy, **options)
+    def bookingsync_synchronize(scope: scope_from_relation, strategy: synced_strategy, **options)
       options.assert_valid_keys(:api, :fields, :include, :remote, :remove, :query_params, :association_sync, :auto_paginate, :transaction_per_page)
       options[:remove]  = synced_remove unless options.has_key?(:remove)
       options[:include] = Array.wrap(synced_include) unless options.has_key?(:include)

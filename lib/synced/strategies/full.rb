@@ -127,7 +127,7 @@ module Synced
       def synchronize_associations(remote, local_object)
         @associations.each do |association|
           klass = association.to_s.classify.constantize
-          klass.synchronize(remote: remote[association], scope: local_object, remove: @remove,
+          klass.bookingsync_synchronize(remote: remote[association], scope: local_object, remove: @remove,
             association_sync: true)
         end
       end

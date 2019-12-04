@@ -72,10 +72,10 @@ describe Synced::Model do
     end
   end
 
-  describe "#synchronize" do
+  describe "#bookingsync_synchronize" do
     it "synchronizes model" do
       expect {
-        Rental.synchronize(remote: [remote_object(id: 12,
+        Rental.bookingsync_synchronize(remote: [remote_object(id: 12,
           updated_at: 2.days.ago)])
       }.to change { Rental.count }.by(1)
     end
@@ -83,7 +83,7 @@ describe Synced::Model do
     context "on unknown option" do
       it "raises unknown key exception" do
         expect {
-          Rental.synchronize(i_have_no_memory_of_this_place: true)
+          Rental.bookingsync_synchronize(i_have_no_memory_of_this_place: true)
         }.to raise_error { |error|
           expect(error.message).to eq "Unknown key: :i_have_no_memory_of_this_place. " \
             + "Valid keys are: :api, :fields, :include, :remote, :remove, :query_params, :association_sync, :auto_paginate, :transaction_per_page"
@@ -98,13 +98,13 @@ describe Synced::Model do
       it "uses auto_paginate from class-level declaration" do
         expect(account.api).to receive(:paginate)
           .with("rentals", { auto_paginate: false }).and_yield([])
-        Rental.synchronize(scope: account)
+        Rental.bookingsync_synchronize(scope: account)
       end
 
       it "overrides auto_paginate from class-level declaration" do
         expect(account.api).to receive(:paginate)
           .with("rentals", { auto_paginate: true }).and_return([])
-        Rental.synchronize(scope: account, auto_paginate: true)
+        Rental.bookingsync_synchronize(scope: account, auto_paginate: true)
       end
     end
 
@@ -126,7 +126,7 @@ describe Synced::Model do
       it "uses transaction_per_page from class-level declaration" do
         expect {
           begin
-            LosRecord.synchronize(scope: account, strategy: :full)
+            LosRecord.bookingsync_synchronize(scope: account, strategy: :full)
           rescue ActiveRecord::RecordInvalid
           end
         }.to change { LosRecord.count }
@@ -153,7 +153,7 @@ describe Synced::Model do
           .and_return([])
         expect(account.api).to receive(:pagination_first_response)
               .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } })).twice
-        Booking.synchronize(scope: account)
+        Booking.bookingsync_synchronize(scope: account)
       end
 
       it "overrides query_params from class-level declaration accepting lambdas with arity 0 and passes value to api" do
@@ -164,7 +164,7 @@ describe Synced::Model do
           .and_return([])
         expect(account.api).to receive(:pagination_first_response)
               .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } })).twice
-        Booking.synchronize(scope: account, query_params: { from: -> { from } })
+        Booking.bookingsync_synchronize(scope: account, query_params: { from: -> { from } })
       end
 
       it "overrides query_params from class-level declaration accepting raw values and passes value to api" do
@@ -175,7 +175,7 @@ describe Synced::Model do
           .and_return([])
         expect(account.api).to receive(:pagination_first_response)
               .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } })).twice
-        Booking.synchronize(scope: account, query_params: { from: from })
+        Booking.bookingsync_synchronize(scope: account, query_params: { from: from })
       end
     end
 
@@ -186,7 +186,7 @@ describe Synced::Model do
       context "when association is present" do
         it "finds scope from the association" do
           expect(Synced::Synchronizer).to receive(:new).with(anything, hash_including(scope: account)).and_return(strategy)
-          account.bookings.synchronize
+          account.bookings.bookingsync_synchronize
         end
       end
 
@@ -195,12 +195,12 @@ describe Synced::Model do
 
         it "overrides the associations one" do
           expect(Synced::Synchronizer).to receive(:new).with(anything, hash_including(scope: another_account)).and_return(strategy)
-          account.bookings.synchronize(scope: another_account)
+          account.bookings.bookingsync_synchronize(scope: another_account)
         end
 
         it "uses the scope given in options" do
           expect(Synced::Synchronizer).to receive(:new).with(anything, hash_including(scope: another_account)).and_return(strategy)
-          Booking.synchronize(scope: another_account)
+          Booking.bookingsync_synchronize(scope: another_account)
         end
       end
 
@@ -209,7 +209,7 @@ describe Synced::Model do
 
         it "the scope option is not set" do
           expect(Synced::Synchronizer).to receive(:new).with(anything, hash_excluding(scope: another_account)).and_return(strategy)
-          Booking.synchronize
+          Booking.bookingsync_synchronize
         end
       end
     end
@@ -227,7 +227,7 @@ describe Synced::Model do
           .and_return(remote_bookings)
         expect(account.api).to receive(:pagination_first_response)
               .and_return(double({ headers: { "x-updated-since-request-synced-at" => request_timestamp.to_s } })).twice
-        Booking.synchronize(scope: account, query_params: {})
+        Booking.bookingsync_synchronize(scope: account, query_params: {})
       end
 
       it "resets synced_all_at column" do
