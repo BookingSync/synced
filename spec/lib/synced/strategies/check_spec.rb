@@ -44,7 +44,7 @@ describe Synced::Strategies::Check do
 
   context "when local object is outdated" do
     before do
-      rental.update_attributes(synced_data: { id: 42, name: "apartment Updated!" })
+      rental.update(synced_data: { id: 42, name: "apartment Updated!" })
     end
 
     it "returns changed objects" do
