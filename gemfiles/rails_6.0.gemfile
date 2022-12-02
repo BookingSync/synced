@@ -4,5 +4,6 @@ source "https://rubygems.org"
 
 gem "rails", "~> 6.0.0"
 gem "bookingsync-api", github: "BookingSync/bookingsync-api", branch: "add-workflows-stack-bump"
+gem "net-smtp"
 
 gemspec path: "../"
