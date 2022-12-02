@@ -3,6 +3,7 @@
 source "https://rubygems.org"
 
 gem "rails", "~> 7.0.0"
+gem "sprockets-rails"
 gem "bookingsync-api", github: "BookingSync/bookingsync-api", branch: "add-workflows-stack-bump"
 
 gemspec path: "../"
