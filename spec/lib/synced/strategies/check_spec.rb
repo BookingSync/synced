@@ -49,8 +49,19 @@ describe Synced::Strategies::Check do
 
     it "returns changed objects" do
       differences = Rental.synchronize(scope: account, strategy: :check)
-      expect(differences.changed).to eq([[{id: 1}, { "synced_data" =>
-              ["{\"id\":42,\"name\":\"apartment Updated!\"}", { "id"=>42, "name"=>"apartment" }] }]])
+      expect(differences.changed).to eq(
+        [
+          [
+            { id: 1 },
+            {
+              "synced_data" => [
+                "{\"id\":42,\"name\":\"apartment Updated!\"}",
+                "{\"id\":42,\"name\":\"apartment\"}"
+              ]
+            }
+          ]
+        ]
+      )
       expect(differences.missing).to be_empty
       expect(differences.additional).to be_empty
     end

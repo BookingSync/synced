@@ -1,9 +1,15 @@
-appraise "rails-4.1" do
-  gem "rails", "~> 4.1.9"
-  gem "globalize", "~> 4.0.3"
+appraise "rails-6.0" do
+  gem "rails", "~> 6.0.0"
+  gem "bookingsync-api", github: "BookingSync/bookingsync-api", branch: "add-workflows-stack-bump" # remove once release
 end
 
-appraise "rails-4.2" do
-  gem "rails", "~> 4.2.7"
-  gem "globalize", "~> 5"
+appraise "rails-6.1" do
+  gem "rails", "~> 6.1.0"
+  gem "bookingsync-api", github: "BookingSync/bookingsync-api", branch: "add-workflows-stack-bump" # remove once release
 end
+
+appraise "rails-7.0" do
+  gem "rails", "~> 7.0.0"
+  gem "bookingsync-api", github: "BookingSync/bookingsync-api", branch: "add-workflows-stack-bump" # remove once release
+end
+
