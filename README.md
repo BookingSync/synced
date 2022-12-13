@@ -1,5 +1,5 @@
 ©[![Code Climate](https://codeclimate.com/github/BookingSync/synced.png)](https://codeclimate.com/github/BookingSync/synced)
-[![Build Status](https://travis-ci.org/BookingSync/synced.png?branch=master)](https://travis-ci.org/BookingSync/synced)
+[![Build Status](https://github.com/BookingSync/synced/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/BookingSync/synced/actions/workflows/ci.yml)
 
 # Synced
 
@@ -13,7 +13,7 @@ added/changed/deleted objects since last synchronization.
 
 ## Requirements
 
-This engine requires Rails `>= 4.0.0` and Ruby `>= 2.0.0`.
+This engine requires Rails `>= 6.0.0` and Ruby `>= 2.7.0`.
 
 ## Installation
 

@@ -1,5 +1,10 @@
 ## master
 
+* Drop support for ruby prior to 2.7
+* Add support for ruby 3.0 and 3.1
+* Drop support for rails prior to 6
+* Update and lock bookingsync-api at `>= 1`
+
 ## 1.8.0 - 2018-04-30
 * [feature] Model aliasing. added `endpoint` option to synced to determine the model to sync. For example, in user.rb `endpoint: :persons` will look for `Person` class instead of `User`
 
