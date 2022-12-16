@@ -127,7 +127,6 @@ module Synced
       options[:transaction_per_page] = synced_transaction_per_page unless options.has_key?(:transaction_per_page)
       options.merge!({
         scope:                 scope,
-        strategy:              strategy,
         id_key:                synced_id_key,
         synced_data_key:       synced_data_key,
         data_key:              synced_data_key,
@@ -142,7 +141,7 @@ module Synced
         tolerance:             synced_tolerance,
         synced_endpoint:       synced_endpoint
       })
-      Synced::Synchronizer.new(self, options).perform
+      Synced::Synchronizer.new(self, strategy: strategy, **options).perform
     end
 
     # Reset last sync timestamp for given scope, this forces synced to sync
@@ -152,13 +151,12 @@ module Synced
     def reset_synced(scope: scope_from_relation)
       options = {
         scope:                 scope,
-        strategy:              synced_strategy,
         only_updated:          synced_only_updated,
         initial_sync_since:    synced_initial_sync_since,
         timestamp_strategy:    synced_timestamp_strategy,
         synced_endpoint:       synced_endpoint
       }
-      Synced::Synchronizer.new(self, options).reset_synced
+      Synced::Synchronizer.new(self,  strategy: synced_strategy, **options).reset_synced
     end
 
     private
